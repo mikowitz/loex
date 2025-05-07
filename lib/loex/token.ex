@@ -24,6 +24,22 @@ defmodule Loex.Token do
         }
 
   def eof, do: %__MODULE__{type: :EOF, lexeme: ""}
-  def left_paren, do: %__MODULE__{type: :LEFT_PAREN, lexeme: "("}
-  def right_paren, do: %__MODULE__{type: :RIGHT_PAREN, lexeme: ")"}
+
+  %{
+    "LEFT_PAREN" => "(",
+    "RIGHT_PAREN" => ")",
+    "LEFT_BRACE" => "{",
+    "RIGHT_BRACE" => "}",
+    "COMMA" => ",",
+    "DOT" => ".",
+    "MINUS" => "-",
+    "PLUS" => "+",
+    "SEMICOLON" => ";",
+    "STAR" => "*"
+  }
+  |> Enum.map(fn {type, lexeme} ->
+    def unquote(String.to_atom(String.downcase(type)))() do
+      %__MODULE__{type: :"#{unquote(type)}", lexeme: unquote(lexeme)}
+    end
+  end)
 end

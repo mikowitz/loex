@@ -16,6 +16,38 @@ defmodule Loex.Scanner do
     scanner |> with_input(input) |> add_token(Token.right_paren()) |> scan()
   end
 
+  def scan(%__MODULE__{input: "{" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.left_brace()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "}" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.right_brace()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "," <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.comma()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "." <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.dot()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "-" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.minus()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "+" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.plus()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: ";" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.semicolon()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "*" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.star()) |> scan()
+  end
+
   #############
   ## PRIVATE ##
   #############

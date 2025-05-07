@@ -3,7 +3,15 @@ defmodule LoexTest.Support.Generators do
 
   @single_character_tokens [
     LEFT_PAREN: "(",
-    RIGHT_PAREN: ")"
+    RIGHT_PAREN: ")",
+    LEFT_BRACE: "{",
+    RIGHT_BRACE: "}",
+    COMMA: ",",
+    DOT: ".",
+    MINUS: "-",
+    PLUS: "+",
+    SEMICOLON: ";",
+    STAR: "*"
   ]
 
   def token do
