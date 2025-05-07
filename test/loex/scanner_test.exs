@@ -73,5 +73,19 @@ defmodule Loex.ScannerTest do
                end) == expected_stderr
       end
     end
+
+    property "with operators" do
+      check all input <- StreamData.list_of(token_or_operator(), min_length: 1) do
+        {input, tokens} = Enum.unzip(input)
+        input = Enum.join(input)
+        tokens = finalize_tokens(tokens)
+
+        scanner = Scanner.new(input)
+
+        scanner = Scanner.scan(scanner)
+        assert scanner.tokens == tokens
+        refute scanner.has_errors
+      end
+    end
   end
 end

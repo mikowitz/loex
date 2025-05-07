@@ -15,6 +15,14 @@ defmodule Loex.Token do
           | :SEMICOLON
           | :SLASH
           | :STAR
+          | :BANG_EQUAL
+          | :EQUAL_EQUAL
+          | :LESS_EQUAL
+          | :GREATER_EQUAL
+          | :BANG
+          | :EQUAL
+          | :LESS
+          | :GREATER
 
   @type t :: %__MODULE__{
           type: token_type(),
@@ -35,7 +43,15 @@ defmodule Loex.Token do
     "MINUS" => "-",
     "PLUS" => "+",
     "SEMICOLON" => ";",
-    "STAR" => "*"
+    "STAR" => "*",
+    "BANG_EQUAL" => "!=",
+    "EQUAL_EQUAL" => "==",
+    "LESS_EQUAL" => "<=",
+    "GREATER_EQUAL" => ">=",
+    "BANG" => "!",
+    "EQUAL" => "=",
+    "LESS" => "<",
+    "GREATER" => ">"
   }
   |> Enum.map(fn {type, lexeme} ->
     def unquote(String.to_atom(String.downcase(type)))() do

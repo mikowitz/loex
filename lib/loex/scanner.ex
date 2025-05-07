@@ -48,6 +48,38 @@ defmodule Loex.Scanner do
     scanner |> with_input(input) |> add_token(Token.star()) |> scan()
   end
 
+  def scan(%__MODULE__{input: "!=" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.bang_equal()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "==" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.equal_equal()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "<=" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.less_equal()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: ">=" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.greater_equal()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "!" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.bang()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "=" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.equal()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "<" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.less()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: ">" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.greater()) |> scan()
+  end
+
   def scan(%__MODULE__{input: <<char::binary-size(1), input::binary>>} = scanner) do
     Loex.error(scanner.current_line, "Unexpected character #{char}")
     scanner |> with_input(input) |> with_errors() |> scan()
