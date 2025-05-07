@@ -48,12 +48,21 @@ defmodule Loex.Scanner do
     scanner |> with_input(input) |> add_token(Token.star()) |> scan()
   end
 
+  def scan(%__MODULE__{input: <<char::binary-size(1), input::binary>>} = scanner) do
+    Loex.error(scanner.current_line, "Unexpected character #{char}")
+    scanner |> with_input(input) |> with_errors() |> scan()
+  end
+
   #############
   ## PRIVATE ##
   #############
 
   defp with_input(%__MODULE__{} = scanner, input) do
     %__MODULE__{scanner | input: input}
+  end
+
+  defp with_errors(%__MODULE__{} = scanner) do
+    %__MODULE__{scanner | has_errors: true}
   end
 
   defp add_token(%__MODULE__{current_line: line, tokens: tokens} = scanner, %Token{} = token) do

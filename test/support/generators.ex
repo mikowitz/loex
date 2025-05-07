@@ -21,8 +21,21 @@ defmodule LoexTest.Support.Generators do
     |> StreamData.one_of()
   end
 
+  def invalid_char do
+    ~w(@ # $ % ^)
+    |> Enum.map(&{&1, :invalid})
+    |> Enum.map(&StreamData.constant/1)
+    |> StreamData.one_of()
+  end
+
+  def token_or_invalid do
+    StreamData.one_of([token(), invalid_char()])
+  end
+
   def finalize_tokens(tokens) do
-    (tokens ++ [Token.eof()])
+    tokens
+    |> Enum.filter(&is_struct(&1, Token))
+    |> Kernel.++([Token.eof()])
     |> Enum.map(&%Token{&1 | line: 1})
   end
 end
