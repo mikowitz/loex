@@ -11,7 +11,8 @@ defmodule LoexTest.Support.Generators do
     MINUS: "-",
     PLUS: "+",
     SEMICOLON: ";",
-    STAR: "*"
+    STAR: "*",
+    SLASH: "/"
   ]
 
   @operators [
@@ -40,7 +41,7 @@ defmodule LoexTest.Support.Generators do
   end
 
   def invalid_char do
-    ~w(@ # $ % ^)
+    ~w(@ # $ % ^ &)
     |> Enum.map(&{&1, :invalid})
     |> Enum.map(&StreamData.constant/1)
     |> StreamData.one_of()
@@ -54,42 +55,32 @@ defmodule LoexTest.Support.Generators do
     StreamData.one_of([token(), operator()])
   end
 
-  def finalize_tokens(tokens) do
-    tokens
-    |> Enum.filter(&is_struct(&1, Token))
-    |> correct_operators()
-    |> Kernel.++([Token.eof()])
-    |> Enum.map(&%Token{&1 | line: 1})
+  def comment do
+    StreamData.string(:ascii)
+    |> StreamData.map(&{"// #{&1}", :comment})
   end
 
-  defp correct_operators([]), do: []
-  defp correct_operators(tokens), do: correct_operators(tokens, [])
-
-  defp correct_operators([], acc), do: Enum.reverse(acc)
-  defp correct_operators([t], acc), do: Enum.reverse([t | acc])
-
-  defp correct_operators([%Token{type: type} = t | [t2 | rest] = tail], acc)
-       when type in ~w(BANG EQUAL LESS GREATER)a do
-    case t2.type do
-      :EQUAL -> correct_operators(rest, [extend_operator(t) | acc])
-      :EQUAL_EQUAL -> correct_operators([Token.equal() | rest], [extend_operator(t) | acc])
-      _ -> correct_operators(tail, [t | acc])
-    end
+  def comment_with_newline do
+    comment() |> StreamData.map(fn {s, :comment} -> {"#{s}\n", :comment_with_newline} end)
   end
 
-  defp correct_operators([a | rest], acc) do
-    correct_operators(rest, [a | acc])
+  def whitespace do
+    [{"\n", :newline}, {" ", :space}, {"\t", :tab}]
+    |> Enum.map(&StreamData.constant/1)
+    |> StreamData.one_of()
   end
 
-  defp extend_operator(%Token{type: :BANG} = token),
-    do: %Token{token | type: :BANG_EQUAL, lexeme: "!="}
-
-  defp extend_operator(%Token{type: :EQUAL} = token),
-    do: %Token{token | type: :EQUAL_EQUAL, lexeme: "=="}
-
-  defp extend_operator(%Token{type: :LESS} = token),
-    do: %Token{token | type: :LESS_EQUAL, lexeme: "<="}
-
-  defp extend_operator(%Token{type: :GREATER} = token),
-    do: %Token{token | type: :GREATER_EQUAL, lexeme: ">="}
+  def lox_content do
+    StreamData.list_of(
+      StreamData.one_of([
+        token(),
+        operator(),
+        invalid_char(),
+        comment(),
+        comment_with_newline(),
+        whitespace()
+      ]),
+      min_length: 1
+    )
+  end
 end

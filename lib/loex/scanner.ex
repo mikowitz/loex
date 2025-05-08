@@ -80,6 +80,29 @@ defmodule Loex.Scanner do
     scanner |> with_input(input) |> add_token(Token.greater()) |> scan()
   end
 
+  def scan(%__MODULE__{input: "//" <> input} = scanner) do
+    case String.split(input, "\n", parts: 2) do
+      [_rest] -> scanner |> with_input("") |> scan()
+      [_comment, rest] -> scanner |> next_line() |> with_input(rest) |> scan()
+    end
+  end
+
+  def scan(%__MODULE__{input: "/" <> input} = scanner) do
+    scanner |> with_input(input) |> add_token(Token.slash()) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "\n" <> input} = scanner) do
+    scanner |> next_line() |> with_input(input) |> scan()
+  end
+
+  def scan(%__MODULE__{input: " " <> input} = scanner) do
+    scanner |> with_input(input) |> scan()
+  end
+
+  def scan(%__MODULE__{input: "\t" <> input} = scanner) do
+    scanner |> with_input(input) |> scan()
+  end
+
   def scan(%__MODULE__{input: <<char::binary-size(1), input::binary>>} = scanner) do
     Loex.error(scanner.current_line, "Unexpected character #{char}")
     scanner |> with_input(input) |> with_errors() |> scan()
@@ -95,6 +118,10 @@ defmodule Loex.Scanner do
 
   defp with_errors(%__MODULE__{} = scanner) do
     %__MODULE__{scanner | has_errors: true}
+  end
+
+  defp next_line(%__MODULE__{current_line: line} = scanner) do
+    %__MODULE__{scanner | current_line: line + 1}
   end
 
   defp add_token(%__MODULE__{current_line: line, tokens: tokens} = scanner, %Token{} = token) do

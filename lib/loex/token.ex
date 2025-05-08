@@ -15,6 +15,7 @@ defmodule Loex.Token do
           | :SEMICOLON
           | :SLASH
           | :STAR
+          | :SLASH
           | :BANG_EQUAL
           | :EQUAL_EQUAL
           | :LESS_EQUAL
@@ -44,6 +45,7 @@ defmodule Loex.Token do
     "PLUS" => "+",
     "SEMICOLON" => ";",
     "STAR" => "*",
+    "SLASH" => "/",
     "BANG_EQUAL" => "!=",
     "EQUAL_EQUAL" => "==",
     "LESS_EQUAL" => "<=",
