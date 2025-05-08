@@ -66,17 +66,22 @@ defmodule LoexTest.Support.TestCaseHelpers do
     prepare_tokens(rest, input <> lex, tokens, errors, line)
   end
 
+  ########################
   ## DROP_UNTIL_NEWLINE ##
+  ########################
 
   defp drop_until_newline([]), do: []
   defp drop_until_newline([{_, :newline} | _] = rest), do: rest
   defp drop_until_newline([{_, :comment_with_newline} | _] = rest), do: rest
-  # NOTE: strings starting in a comment are tricky, so move any starting strings to a new line
-  # this case is handled in a specific test
+
+  # NOTE: strings starting in a comment are tricky, so move any strings that start during a comment
+  # to a new line. This case is handled in a specific test
   defp drop_until_newline([{_, %Token{type: :STRING}} | _] = rest), do: [{"\n", :newline} | rest]
   defp drop_until_newline([_ | rest]), do: drop_until_newline(rest)
 
+  #####################
   ## HANDLE_OPERATOR ##
+  #####################
 
   defp handle_operator({lex, tok}, [{"=", %Token{type: :EQUAL}} | rest]) do
     {lex <> "=", extend_operator(tok), rest}
@@ -90,7 +95,9 @@ defmodule LoexTest.Support.TestCaseHelpers do
     {lex, tok, rest}
   end
 
+  #####################
   ## EXTEND_OPERATOR ##
+  #####################
 
   defp extend_operator(%Token{type: :BANG}), do: Token.bang_equal()
   defp extend_operator(%Token{type: :EQUAL}), do: Token.equal_equal()

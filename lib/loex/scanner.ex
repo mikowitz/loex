@@ -10,7 +10,8 @@ defmodule Loex.Scanner do
   alias Loex.Token
 
   defguardp is_alpha(c) when c in ?a..?z or c in ?A..?Z or c == ?_
-  defguardp is_alphanum(c) when is_alpha(c) or c in ?0..?9
+  defguardp is_digit(c) when c in ?0..?9
+  defguardp is_alphanum(c) when is_alpha(c) or is_digit(c)
 
   defstruct [:input, tokens: [], current_line: 1, has_errors: false]
 
@@ -141,10 +142,8 @@ defmodule Loex.Scanner do
     end
   end
 
-  @digits ~w(0 1 2 3 4 5 6 7 8 9)
-  def scan(%__MODULE__{input: <<n::binary-size(1), input::binary>>} = scanner)
-      when n in @digits do
-    {num, rest} = extract_number(input, n, false)
+  def scan(%__MODULE__{input: <<n, input::binary>>} = scanner) when is_digit(n) do
+    {num, rest} = extract_number(input, [n], false)
     scanner |> with_input(rest) |> add_token(Token.number(num)) |> scan()
   end
 
@@ -179,19 +178,15 @@ defmodule Loex.Scanner do
     {token, rest}
   end
 
-  defp extract_number("", acc, _seen_dot) do
-    {acc, ""}
-  end
-
-  defp extract_number(<<n::binary-size(1), rest::binary>>, acc, seen_dot) when n in @digits do
-    extract_number(rest, acc <> n, seen_dot)
+  defp extract_number(<<n, rest::binary>>, acc, seen_dot) when is_digit(n) do
+    extract_number(rest, [n | acc], seen_dot)
   end
 
   defp extract_number("." <> rest, acc, false) do
-    extract_number(rest, acc <> ".", true)
+    extract_number(rest, [?. | acc], true)
   end
 
-  defp extract_number(rest, acc, _), do: {acc, rest}
+  defp extract_number(rest, acc, _), do: {to_string(Enum.reverse(acc)), rest}
 
   #############
   ## HELPERS ##
