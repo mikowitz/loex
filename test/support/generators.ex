@@ -65,7 +65,12 @@ defmodule LoexTest.Support.Generators do
   end
 
   def string do
-    StreamData.string(:alphanumeric)
+    StreamData.frequency([
+      {5, StreamData.string(:alphanumeric)},
+      {1, StreamData.constant("\n")}
+    ])
+    |> StreamData.list_of(min_length: 1)
+    |> StreamData.map(&Enum.join/1)
     |> StreamData.map(fn s ->
       {"\"#{s}\"", Token.string(s)}
     end)

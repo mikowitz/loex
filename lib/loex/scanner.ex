@@ -106,7 +106,13 @@ defmodule Loex.Scanner do
   def scan(%__MODULE__{input: "\"" <> input} = scanner) do
     case String.split(input, "\"", parts: 2) do
       [str, rest] ->
-        scanner |> with_input(rest) |> add_token(Token.string(str)) |> scan()
+        line_delta = to_charlist(str) |> Enum.count(&(&1 == ?\n))
+
+        scanner
+        |> with_input(rest)
+        |> add_token(Token.string(str))
+        |> add_lines(line_delta)
+        |> scan()
 
       [_str] ->
         Loex.error(scanner.current_line, "Unterminated string")
@@ -129,6 +135,10 @@ defmodule Loex.Scanner do
 
   defp with_errors(%__MODULE__{} = scanner) do
     %__MODULE__{scanner | has_errors: true}
+  end
+
+  defp add_lines(%__MODULE__{current_line: line} = scanner, line_delta) do
+    %__MODULE__{scanner | current_line: line + line_delta}
   end
 
   defp next_line(%__MODULE__{current_line: line} = scanner) do

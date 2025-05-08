@@ -128,5 +128,28 @@ defmodule Loex.ScannerTest do
              [line 2] Error: Unterminated string
              """
     end
+
+    test "a multiline string" do
+      input =
+        """
+        "hello
+        this is a
+        test" == "ok"
+        """
+        |> String.trim()
+
+      scanner = Scanner.new(input)
+
+      scanner = Scanner.scan(scanner)
+
+      assert scanner.tokens == [
+               %Token{Token.string("hello\nthis is a\ntest") | line: 1},
+               %Token{Token.equal_equal() | line: 3},
+               %Token{Token.string("ok") | line: 3},
+               %Token{Token.eof() | line: 3}
+             ]
+
+      refute scanner.has_errors
+    end
   end
 end

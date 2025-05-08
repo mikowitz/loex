@@ -21,6 +21,12 @@ defmodule LoexTest.Support.TestCaseHelpers do
     {input, Enum.reverse([eof | tokens]), Enum.reverse(errors)}
   end
 
+  defp prepare_tokens([{str, %Token{type: :STRING} = t} | rest], input, tokens, errors, line) do
+    token = %Token{t | line: line}
+    line_delta = to_charlist(str) |> Enum.count(&(&1 == ?\n))
+    prepare_tokens(rest, input <> str, [token | tokens], errors, line + line_delta)
+  end
+
   defp prepare_tokens([{_, %Token{type: t}} = token | rest], input, tokens, errors, line)
        when t in @op_type do
     {op_lex, op_token, rest} = handle_operator(token, rest)
