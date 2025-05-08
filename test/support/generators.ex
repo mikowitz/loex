@@ -64,6 +64,13 @@ defmodule LoexTest.Support.Generators do
     comment() |> StreamData.map(fn {s, :comment} -> {"#{s}\n", :comment_with_newline} end)
   end
 
+  def string do
+    StreamData.string(:alphanumeric)
+    |> StreamData.map(fn s ->
+      {"\"#{s}\"", Token.string(s)}
+    end)
+  end
+
   def whitespace do
     [{"\n", :newline}, {" ", :space}, {"\t", :tab}]
     |> Enum.map(&StreamData.constant/1)
@@ -78,7 +85,8 @@ defmodule LoexTest.Support.Generators do
         invalid_char(),
         comment(),
         comment_with_newline(),
-        whitespace()
+        whitespace(),
+        string()
       ]),
       min_length: 1
     )

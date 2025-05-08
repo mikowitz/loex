@@ -103,6 +103,17 @@ defmodule Loex.Scanner do
     scanner |> with_input(input) |> scan()
   end
 
+  def scan(%__MODULE__{input: "\"" <> input} = scanner) do
+    case String.split(input, "\"", parts: 2) do
+      [str, rest] ->
+        scanner |> with_input(rest) |> add_token(Token.string(str)) |> scan()
+
+      [_str] ->
+        Loex.error(scanner.current_line, "Unterminated string")
+        scanner |> with_input("") |> with_errors() |> scan()
+    end
+  end
+
   def scan(%__MODULE__{input: <<char::binary-size(1), input::binary>>} = scanner) do
     Loex.error(scanner.current_line, "Unexpected character #{char}")
     scanner |> with_input(input) |> with_errors() |> scan()

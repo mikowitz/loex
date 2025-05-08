@@ -24,6 +24,7 @@ defmodule Loex.Token do
           | :EQUAL
           | :LESS
           | :GREATER
+          | :STRING
 
   @type t :: %__MODULE__{
           type: token_type(),
@@ -60,4 +61,8 @@ defmodule Loex.Token do
       %__MODULE__{type: :"#{unquote(type)}", lexeme: unquote(lexeme)}
     end
   end)
+
+  def string(str) do
+    %__MODULE__{type: :STRING, lexeme: str, literal: str}
+  end
 end
