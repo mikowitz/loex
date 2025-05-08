@@ -109,6 +109,18 @@ defmodule Loex.Scanner do
     end
   end
 
+  def scan(%__MODULE__{input: "/*" <> input} = scanner) do
+    case String.split(input, "*/", parts: 2) do
+      [comment] ->
+        line_delta = to_charlist(comment) |> Enum.count(&(&1 == ?\n))
+        scanner |> add_lines(line_delta) |> with_input("") |> scan()
+
+      [comment, rest] ->
+        line_delta = to_charlist(comment) |> Enum.count(&(&1 == ?\n))
+        scanner |> add_lines(line_delta) |> with_input(rest) |> scan()
+    end
+  end
+
   def scan(%__MODULE__{input: "/" <> input} = scanner) do
     scanner |> with_input(input) |> add_token(Token.slash()) |> scan()
   end
@@ -136,9 +148,10 @@ defmodule Loex.Scanner do
         |> add_lines(line_delta)
         |> scan()
 
-      [_str] ->
+      [str] ->
         Loex.error(scanner.current_line, "Unterminated string")
-        scanner |> with_input("") |> with_errors() |> scan()
+        line_delta = to_charlist(str) |> Enum.count(&(&1 == ?\n))
+        scanner |> add_lines(line_delta) |> with_input("") |> with_errors() |> scan()
     end
   end
 
@@ -204,9 +217,7 @@ defmodule Loex.Scanner do
     %__MODULE__{scanner | current_line: line + line_delta}
   end
 
-  defp next_line(%__MODULE__{current_line: line} = scanner) do
-    %__MODULE__{scanner | current_line: line + 1}
-  end
+  defp next_line(%__MODULE__{} = scanner), do: add_lines(scanner, 1)
 
   defp add_token(%__MODULE__{current_line: line, tokens: tokens} = scanner, %Token{} = token) do
     token = %Token{token | line: line}

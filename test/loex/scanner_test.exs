@@ -171,5 +171,31 @@ defmodule Loex.ScannerTest do
 
       refute scanner.has_errors
     end
+
+    test "C-style multiline comments" do
+      input =
+        """
+        "hello"
+        /* 
+        multi 
+        line 
+          comment = 32
+        */ 
+        32
+        """
+        |> String.trim()
+
+      scanner = Scanner.new(input)
+
+      scanner = Scanner.scan(scanner)
+
+      assert scanner.tokens == [
+               %Token{Token.string("hello") | line: 1},
+               %Token{Token.number("32") | line: 7},
+               %Token{Token.eof() | line: 7}
+             ]
+
+      refute scanner.has_errors
+    end
   end
 end
