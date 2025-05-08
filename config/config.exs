@@ -1,8 +1,5 @@
 import Config
 
-config :mix_test_watch,
-  tasks: [
-    "test",
-    "credo --strict --all",
-    "docs"
-  ]
+config :loex, color_output: true
+
+import_config("#{Mix.env()}.exs")

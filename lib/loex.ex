@@ -11,7 +11,13 @@ defmodule Loex do
   def error(line, message) do
     IO.puts(
       :stderr,
-      "[line #{line}] Error: #{message}"
+      IO.ANSI.format(
+        [
+          :red,
+          "[line #{line}] Error: #{message}"
+        ],
+        Application.get_env(:loex, :color_output, true)
+      )
     )
   end
 end

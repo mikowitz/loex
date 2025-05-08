@@ -2,6 +2,7 @@ defmodule Loex.CLI do
   @moduledoc """
   Primary entrypoint for the `loex` executable
   """
+  alias Loex.Scanner
 
   @doc false
   def main(args) do
@@ -31,7 +32,7 @@ defmodule Loex.CLI do
         System.stop(65)
 
       data ->
-        data |> String.trim() |> IO.puts()
+        data |> String.trim() |> scan() |> output()
         run_repl()
     end
   end
@@ -39,11 +40,25 @@ defmodule Loex.CLI do
   defp run_file(filename) do
     case File.read(filename) do
       {:ok, contents} ->
-        IO.puts(contents)
+        scanner = scan(contents)
+
+        output(scanner)
+
+        if scanner.has_errors do
+          System.stop(65)
+        end
 
       {:error, error} ->
         IO.puts(:stderr, "Error reading #{filename}: #{error}")
         System.stop(65)
     end
+  end
+
+  defp scan(input) do
+    input |> Scanner.new() |> Scanner.scan()
+  end
+
+  defp output(%Scanner{tokens: tokens}) do
+    Enum.each(tokens, &IO.puts("#{inspect(&1)}"))
   end
 end
