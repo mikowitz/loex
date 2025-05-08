@@ -1,16 +1,17 @@
 defmodule LoexTest.Support.TestCaseHelpers do
   alias Loex.Token
 
+  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
+
   def prepare_tokens(input) do
     input
     # NOTE: double slashes turning into comments gets weird, so let's skip it
+    # and numbers and identifiers getting mashed together
     |> Enum.map(fn
       {"/", %Token{type: :SLASH}} = t -> [t, {" ", :space}]
-      t -> t
-    end)
-    # NOTE: and so are numbers getting mashed together 
-    |> Enum.map(fn
       {_, %Token{type: :NUMBER}} = t -> [t, {" ", :space}]
+      {_, %Token{type: :IDENTIFIER}} = t -> [t, {" ", :space}]
+      {_, %Token{lexeme: lex}} = t when lex in @reserved_words -> [t, {" ", :space}]
       t -> t
     end)
     |> List.flatten()

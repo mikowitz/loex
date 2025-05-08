@@ -25,6 +25,23 @@ defmodule Loex.Token do
           | :LESS
           | :GREATER
           | :STRING
+          | :IDENTIFIER
+          | :AND
+          | :CLASS
+          | :ELSE
+          | :FALSE
+          | :FOR
+          | :FUN
+          | :IF
+          | :NIL
+          | :OR
+          | :PRINT
+          | :RETURN
+          | :SUPER
+          | :THIS
+          | :TRUE
+          | :VAR
+          | :WHILE
 
   @type t :: %__MODULE__{
           type: token_type(),
@@ -69,5 +86,15 @@ defmodule Loex.Token do
   def number(n) do
     {lit, ""} = Float.parse(n)
     %__MODULE__{type: :NUMBER, lexeme: n, literal: lit}
+  end
+
+  def identifier(identifier) do
+    %__MODULE__{type: :IDENTIFIER, lexeme: identifier}
+  end
+
+  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
+
+  def reserved_word(word) when word in @reserved_words do
+    %__MODULE__{type: :"#{String.upcase(word)}", lexeme: word}
   end
 end

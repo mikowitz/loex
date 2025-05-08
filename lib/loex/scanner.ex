@@ -127,6 +127,12 @@ defmodule Loex.Scanner do
     scanner |> with_input(rest) |> add_token(Token.number(num)) |> scan()
   end
 
+  def scan(%__MODULE__{input: <<char, input::binary>>} = scanner)
+      when char in ?a..?z or char in ?A..?Z or char == ?_ do
+    {token, rest} = extract_identifier(input, [char])
+    scanner |> with_input(rest) |> add_token(token) |> scan()
+  end
+
   def scan(%__MODULE__{input: <<char::binary-size(1), input::binary>>} = scanner) do
     Loex.error(scanner.current_line, "Unexpected character #{char}")
     scanner |> with_input(input) |> with_errors() |> scan()
@@ -135,6 +141,27 @@ defmodule Loex.Scanner do
   #############
   ## PRIVATE ##
   #############
+
+  defguardp is_alpha(c) when c in ?a..?z or c in ?A..?Z or c == ?_
+  defguardp is_alphanum(c) when is_alpha(c) or c in ?0..?9
+
+  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
+
+  defp extract_identifier(<<char, rest::binary>>, acc) when is_alphanum(char) do
+    extract_identifier(rest, [char | acc])
+  end
+
+  defp extract_identifier(rest, acc) do
+    ident = to_string(Enum.reverse(acc))
+
+    token =
+      case ident in @reserved_words do
+        true -> Token.reserved_word(ident)
+        false -> Token.identifier(ident)
+      end
+
+    {token, rest}
+  end
 
   defp extract_number("", acc, _seen_dot) do
     {acc, ""}
