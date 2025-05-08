@@ -7,6 +7,8 @@ defmodule Loex.MixProject do
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
+      escript: [main_module: Loex.CLI],
       deps: deps()
     ]
   end
@@ -21,8 +23,13 @@ defmodule Loex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:credo, "~> 1.7.12", only: [:test], runtime: false},
+      {:ex_doc, "~> 0.37.3", runtime: false},
+      {:mix_test_watch, "~> 1.2.0", only: [:test], runtime: false},
+      {:stream_data, "~> 1.2.0"}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
