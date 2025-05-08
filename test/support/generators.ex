@@ -76,6 +76,15 @@ defmodule LoexTest.Support.Generators do
     end)
   end
 
+  def number do
+    StreamData.one_of([
+      StreamData.integer(0..999),
+      # NOTE: small range to avoid scientific notation
+      StreamData.float(min: 1, max: 999)
+    ])
+    |> StreamData.map(&{to_string(&1), Token.number(to_string(&1))})
+  end
+
   def whitespace do
     [{"\n", :newline}, {" ", :space}, {"\t", :tab}]
     |> Enum.map(&StreamData.constant/1)
@@ -91,7 +100,8 @@ defmodule LoexTest.Support.Generators do
         comment(),
         comment_with_newline(),
         whitespace(),
-        string()
+        string(),
+        number()
       ]),
       min_length: 1
     )

@@ -65,4 +65,9 @@ defmodule Loex.Token do
   def string(str) do
     %__MODULE__{type: :STRING, lexeme: str, literal: str}
   end
+
+  def number(n) do
+    {lit, ""} = Float.parse(n)
+    %__MODULE__{type: :NUMBER, lexeme: n, literal: lit}
+  end
 end

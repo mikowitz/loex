@@ -8,6 +8,11 @@ defmodule LoexTest.Support.TestCaseHelpers do
       {"/", %Token{type: :SLASH}} = t -> [t, {" ", :space}]
       t -> t
     end)
+    # NOTE: and so are numbers getting mashed together 
+    |> Enum.map(fn
+      {_, %Token{type: :NUMBER}} = t -> [t, {" ", :space}]
+      t -> t
+    end)
     |> List.flatten()
     |> prepare_tokens("", [], [], 1)
   end
@@ -36,7 +41,7 @@ defmodule LoexTest.Support.TestCaseHelpers do
 
   defp prepare_tokens([{lex, %Token{} = tok} | rest], input, tokens, errors, line) do
     tok = %Token{tok | line: line}
-    prepare_tokens(rest, input <> lex, [tok | tokens], errors, line)
+    prepare_tokens(rest, input <> to_string(lex), [tok | tokens], errors, line)
   end
 
   defp prepare_tokens([{lex, :invalid} | rest], input, tokens, errors, line) do

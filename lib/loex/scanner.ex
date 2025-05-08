@@ -120,6 +120,13 @@ defmodule Loex.Scanner do
     end
   end
 
+  @digits ~w(0 1 2 3 4 5 6 7 8 9)
+  def scan(%__MODULE__{input: <<n::binary-size(1), input::binary>>} = scanner)
+      when n in @digits do
+    {num, rest} = extract_number(input, n, false)
+    scanner |> with_input(rest) |> add_token(Token.number(num)) |> scan()
+  end
+
   def scan(%__MODULE__{input: <<char::binary-size(1), input::binary>>} = scanner) do
     Loex.error(scanner.current_line, "Unexpected character #{char}")
     scanner |> with_input(input) |> with_errors() |> scan()
@@ -128,6 +135,20 @@ defmodule Loex.Scanner do
   #############
   ## PRIVATE ##
   #############
+
+  defp extract_number("", acc, _seen_dot) do
+    {acc, ""}
+  end
+
+  defp extract_number(<<n::binary-size(1), rest::binary>>, acc, seen_dot) when n in @digits do
+    extract_number(rest, acc <> n, seen_dot)
+  end
+
+  defp extract_number("." <> rest, acc, false) do
+    extract_number(rest, acc <> ".", true)
+  end
+
+  defp extract_number(rest, acc, _), do: {acc, rest}
 
   defp with_input(%__MODULE__{} = scanner, input) do
     %__MODULE__{scanner | input: input}

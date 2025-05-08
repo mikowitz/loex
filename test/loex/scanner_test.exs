@@ -151,5 +151,26 @@ defmodule Loex.ScannerTest do
 
       refute scanner.has_errors
     end
+
+    test "a very large number" do
+      input = "234728233234.23434343234."
+
+      scanner = Scanner.new(input)
+
+      scanner = Scanner.scan(scanner)
+
+      assert scanner.tokens == [
+               %Token{
+                 type: :NUMBER,
+                 line: 1,
+                 lexeme: "234728233234.23434343234",
+                 literal: 234_728_233_234.23434343234
+               },
+               %Token{type: :DOT, line: 1, lexeme: ".", literal: nil},
+               %Token{Token.eof() | line: 1}
+             ]
+
+      refute scanner.has_errors
+    end
   end
 end
