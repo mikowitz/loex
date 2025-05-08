@@ -23,19 +23,20 @@ defmodule Loex.ScannerTest do
     end
 
     property "with a single character token input" do
-      check all {str, token} <- token() do
-        scanner = Scanner.new(str)
+      check all input <- token() do
+        {input, tokens, _errors} = prepare_tokens([input])
+        scanner = Scanner.new(input)
         scanner = Scanner.scan(scanner)
 
-        assert scanner.tokens == finalize_tokens([token])
-
+        assert scanner.tokens == tokens
         refute scanner.has_errors
       end
     end
 
     property "with a single line of single character tokens" do
       check all input <- StreamData.list_of(token(), min_length: 1) do
-        {scanner, tokens} = generate_scanner_and_expected_tokens(input)
+        {input, tokens, _errors} = prepare_tokens(input)
+        scanner = Scanner.new(input)
         scanner = Scanner.scan(scanner)
 
         assert scanner.tokens == tokens
@@ -45,23 +46,14 @@ defmodule Loex.ScannerTest do
 
     property "with invalid characters" do
       check all input <-
-                  StreamData.list_of(StreamData.one_of([invalid_char(), whitespace()]),
+                  StreamData.list_of(StreamData.one_of([token(), invalid_char(), whitespace()]),
                     min_length: 1
                   ) do
-        {scanner, tokens} = generate_scanner_and_expected_tokens(input)
-
-        invalid_chars =
-          String.split(scanner.input, "\n")
-          |> Enum.with_index(1)
-          |> Enum.map(fn {line, i} ->
-            String.codepoints(line)
-            |> Enum.filter(&(&1 in ~w(@ # $ % ^ &)))
-            |> Enum.map(&{&1, i})
-          end)
-          |> List.flatten()
+        {input, tokens, errors} = prepare_tokens(input)
+        scanner = Scanner.new(input)
 
         expected_stderr =
-          Enum.map(invalid_chars, fn {c, line} ->
+          Enum.map(errors, fn {c, line} ->
             "[line #{line}] Error: Unexpected character #{c}"
           end)
           |> Enum.join("\n")
@@ -69,7 +61,7 @@ defmodule Loex.ScannerTest do
         assert capture_io(:stderr, fn ->
                  scanner = Scanner.scan(scanner)
                  assert scanner.tokens == tokens
-                 assert scanner.has_errors == length(invalid_chars) > 0
+                 assert scanner.has_errors == !Enum.empty?(errors)
                end)
                |> String.trim() == expected_stderr
       end
@@ -77,7 +69,8 @@ defmodule Loex.ScannerTest do
 
     property "with operators" do
       check all input <- StreamData.list_of(token_or_operator(), min_length: 1) do
-        {scanner, tokens} = generate_scanner_and_expected_tokens(input)
+        {input, tokens, _errors} = prepare_tokens(input)
+        scanner = Scanner.new(input)
 
         scanner = Scanner.scan(scanner)
         assert scanner.tokens == tokens
@@ -91,8 +84,9 @@ defmodule Loex.ScannerTest do
                     StreamData.one_of([token_or_operator(), comment(), comment_with_newline()]),
                     min_length: 1
                   ) do
-        {scanner, tokens} = generate_scanner_and_expected_tokens(input)
+        {input, tokens, _errors} = prepare_tokens(input)
 
+        scanner = Scanner.new(input)
         scanner = Scanner.scan(scanner)
         assert scanner.tokens == tokens
         refute scanner.has_errors
@@ -101,23 +95,38 @@ defmodule Loex.ScannerTest do
 
     property "'nonsense' valid lox content" do
       check all input <- lox_content() do
-        {scanner, tokens} = generate_scanner_and_expected_tokens(input)
+        {input, tokens, _errors} = prepare_tokens(input)
+        scanner = Scanner.new(input)
 
-        # silence error output
         capture_io(:stderr, fn ->
           scanner = Scanner.scan(scanner)
           assert scanner.tokens == tokens
         end)
       end
     end
-  end
 
-  defp generate_scanner_and_expected_tokens(input) do
-    {input, tokens} = Enum.unzip(input)
-    input = Enum.join(input)
-    tokens = finalize_tokens(tokens)
+    test "a string that starts in a comment" do
+      input =
+        """
+        // "hello 
+        !"
+        """
+        |> String.trim()
 
-    scanner = Scanner.new(input)
-    {scanner, tokens}
+      scanner = Scanner.new(input)
+
+      assert capture_io(:stderr, fn ->
+               scanner = Scanner.scan(scanner)
+
+               assert scanner.tokens == [
+                        %Token{Token.bang() | line: 2},
+                        %Token{Token.eof() | line: 2}
+                      ]
+
+               assert scanner.has_errors
+             end) == """
+             [line 2] Error: Unterminated string
+             """
+    end
   end
 end
