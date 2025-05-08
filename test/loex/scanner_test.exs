@@ -7,8 +7,8 @@ defmodule Loex.ScannerTest do
   import LoexTest.Support.Generators
   import LoexTest.Support.TestCaseHelpers
 
-  alias Loex.Token
   alias Loex.Scanner
+  alias Loex.Token
 
   describe "scan/1" do
     test "with an empty input" do
@@ -53,10 +53,9 @@ defmodule Loex.ScannerTest do
         scanner = Scanner.new(input)
 
         expected_stderr =
-          Enum.map(errors, fn {c, line} ->
+          Enum.map_join(errors, "\n", fn {c, line} ->
             "[line #{line}] Error: Unexpected character #{c}"
           end)
-          |> Enum.join("\n")
 
         assert capture_io(:stderr, fn ->
                  scanner = Scanner.scan(scanner)

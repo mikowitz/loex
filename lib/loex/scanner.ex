@@ -1,9 +1,30 @@
 defmodule Loex.Scanner do
+  @moduledoc """
+  Scanner for the Lox language. 
+
+  Takes as input a string containing a Lox program and returns
+  a list of tokens and an error state.
+  """
+  use Loex.Constants
+
   alias Loex.Token
+
+  defguardp is_alpha(c) when c in ?a..?z or c in ?A..?Z or c == ?_
+  defguardp is_alphanum(c) when is_alpha(c) or c in ?0..?9
+
   defstruct [:input, tokens: [], current_line: 1, has_errors: false]
 
+  @type t :: %__MODULE__{
+          input: binary(),
+          tokens: [Token.t()],
+          current_line: pos_integer(),
+          has_errors: boolean()
+        }
+
+  @spec new(binary()) :: t()
   def new(input) when is_binary(input), do: %__MODULE__{input: input}
 
+  @spec scan(t()) :: t()
   def scan(%__MODULE__{input: ""} = scanner) do
     scanner |> add_token(Token.eof()) |> finalize()
   end
@@ -128,7 +149,7 @@ defmodule Loex.Scanner do
   end
 
   def scan(%__MODULE__{input: <<char, input::binary>>} = scanner)
-      when char in ?a..?z or char in ?A..?Z or char == ?_ do
+      when is_alpha(char) do
     {token, rest} = extract_identifier(input, [char])
     scanner |> with_input(rest) |> add_token(token) |> scan()
   end
@@ -141,11 +162,6 @@ defmodule Loex.Scanner do
   #############
   ## PRIVATE ##
   #############
-
-  defguardp is_alpha(c) when c in ?a..?z or c in ?A..?Z or c == ?_
-  defguardp is_alphanum(c) when is_alpha(c) or c in ?0..?9
-
-  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
 
   defp extract_identifier(<<char, rest::binary>>, acc) when is_alphanum(char) do
     extract_identifier(rest, [char | acc])
@@ -176,6 +192,10 @@ defmodule Loex.Scanner do
   end
 
   defp extract_number(rest, acc, _), do: {acc, rest}
+
+  #############
+  ## HELPERS ##
+  #############
 
   defp with_input(%__MODULE__{} = scanner, input) do
     %__MODULE__{scanner | input: input}

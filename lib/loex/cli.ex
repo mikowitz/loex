@@ -1,4 +1,9 @@
 defmodule Loex.CLI do
+  @moduledoc """
+  Primary entrypoint for the `loex` executable
+  """
+
+  @doc false
   def main(args) do
     case args do
       [] ->

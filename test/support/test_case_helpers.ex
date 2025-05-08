@@ -1,7 +1,9 @@
 defmodule LoexTest.Support.TestCaseHelpers do
+  @moduledoc false
+
   alias Loex.Token
 
-  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
+  use Loex.Constants
 
   def prepare_tokens(input) do
     input

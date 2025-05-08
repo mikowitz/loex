@@ -1,4 +1,10 @@
 defmodule Loex.Token do
+  @moduledoc """
+  Models a token in the Lox language. Generated and returned by `Loex.Scaner`.
+  """
+
+  use Loex.Constants
+
   defstruct [:type, :lexeme, :literal, :line]
 
   @typedoc false
@@ -91,8 +97,6 @@ defmodule Loex.Token do
   def identifier(identifier) do
     %__MODULE__{type: :IDENTIFIER, lexeme: identifier}
   end
-
-  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
 
   def reserved_word(word) when word in @reserved_words do
     %__MODULE__{type: :"#{String.upcase(word)}", lexeme: word}

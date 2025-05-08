@@ -1,5 +1,8 @@
 defmodule LoexTest.Support.Generators do
+  @moduledoc false
+
   alias Loex.Token
+  use Loex.Constants
 
   @single_character_tokens [
     LEFT_PAREN: "(",
@@ -85,7 +88,6 @@ defmodule LoexTest.Support.Generators do
     |> StreamData.map(&{to_string(&1), Token.number(to_string(&1))})
   end
 
-  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
   def reserved_word do
     @reserved_words
     |> Enum.map(fn w ->
