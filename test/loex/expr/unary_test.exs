@@ -35,5 +35,35 @@ defmodule Loex.Expr.UnaryTest do
                Expr.evaluate(expr)
              end) == "[line 2] Error: Negated operand must be a number, got true\n"
     end
+
+    test "not false" do
+      expr = Unary.new("!", Primary.new(false, 2), 2)
+
+      assert Expr.evaluate(expr) == true
+    end
+
+    test "not nil" do
+      expr = Unary.new("!", Primary.new(nil, 2), 2)
+
+      assert Expr.evaluate(expr) == true
+    end
+
+    test "not true" do
+      expr = Unary.new("!", Primary.new(true, 2), 2)
+
+      assert Expr.evaluate(expr) == false
+    end
+
+    test "not number" do
+      expr = Unary.new("!", Primary.new(3.2343, 2), 2)
+
+      assert Expr.evaluate(expr) == false
+    end
+
+    test "not string" do
+      expr = Unary.new("!", Primary.new("whatever", 2), 2)
+
+      assert Expr.evaluate(expr) == false
+    end
   end
 end

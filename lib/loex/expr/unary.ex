@@ -22,6 +22,17 @@ defmodule Loex.Expr.Unary do
     end
   end
 
+  def evaluate(%__MODULE__{operator: "!", expr: expr}) do
+    case expr.__struct__.evaluate(expr) do
+      {:ok, result} -> {:ok, !truthy?(result)}
+      {:error, _} = error -> error
+    end
+  end
+
+  defp truthy?(nil), do: false
+  defp truthy?(b) when is_boolean(b), do: b
+  defp truthy?(_), do: true
+
   defimpl String.Chars do
     def to_string(%@for{operator: op, expr: expr}) do
       "(" <> op <> " " <> @protocol.to_string(expr) <> ")"

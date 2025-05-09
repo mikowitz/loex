@@ -4,7 +4,7 @@ defmodule Loex.Expr do
   def evaluate(expr) do
     case expr.__struct__.evaluate(expr) do
       {:ok, result} -> result
-      {:error, _error} -> nil
+      {:error, _error} -> :error
     end
   end
 end
