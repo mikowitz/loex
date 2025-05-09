@@ -132,4 +132,51 @@ defmodule LoexTest.Support.Generators do
       min_length: 1
     )
   end
+
+  def literal_expr do
+    StreamData.one_of([
+      StreamData.constant(true),
+      StreamData.constant(false),
+      StreamData.constant(nil),
+      StreamData.integer(0..999),
+      StreamData.float(min: 1, max: 999)
+    ])
+  end
+
+  def unary do
+    StreamData.one_of([
+      StreamData.constant("!"),
+      StreamData.constant("-")
+    ])
+  end
+
+  def factor do
+    StreamData.one_of([
+      StreamData.constant("*"),
+      StreamData.constant("/")
+    ])
+  end
+
+  def term do
+    StreamData.one_of([
+      StreamData.constant("+"),
+      StreamData.constant("-")
+    ])
+  end
+
+  def comparison do
+    StreamData.one_of([
+      StreamData.constant(">"),
+      StreamData.constant("<"),
+      StreamData.constant(">="),
+      StreamData.constant("<=")
+    ])
+  end
+
+  def equality do
+    StreamData.one_of([
+      StreamData.constant("!="),
+      StreamData.constant("==")
+    ])
+  end
 end
