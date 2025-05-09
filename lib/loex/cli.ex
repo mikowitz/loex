@@ -2,7 +2,7 @@ defmodule Loex.CLI do
   @moduledoc """
   Primary entrypoint for the `loex` executable
   """
-  alias Loex.Scanner
+  alias Loex.{Parser, Scanner}
 
   @doc false
   def main(args) do
@@ -32,7 +32,9 @@ defmodule Loex.CLI do
         System.stop(65)
 
       data ->
-        data |> String.trim() |> scan() |> output()
+        %Scanner{tokens: tokens} = data |> String.trim() |> scan()
+        %Parser{ast: ast} = tokens |> parse()
+        IO.puts("#{inspect(ast)}")
         run_repl()
     end
   end
@@ -42,11 +44,18 @@ defmodule Loex.CLI do
       {:ok, contents} ->
         scanner = scan(contents)
 
-        output(scanner)
-
         if scanner.has_errors do
+          output(scanner)
           System.stop(65)
         end
+
+        %Parser{ast: ast} = parser = parse(scanner.tokens)
+
+        if parser.has_errors do
+          System.stop(65)
+        end
+
+        IO.puts("#{inspect(ast)}")
 
       {:error, error} ->
         IO.puts(:stderr, "Error reading #{filename}: #{error}")
@@ -56,6 +65,10 @@ defmodule Loex.CLI do
 
   defp scan(input) do
     input |> Scanner.new() |> Scanner.scan()
+  end
+
+  defp parse(tokens) do
+    tokens |> Parser.new() |> Parser.parse()
   end
 
   defp output(%Scanner{tokens: tokens}) do

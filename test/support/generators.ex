@@ -149,4 +149,34 @@ defmodule LoexTest.Support.Generators do
       StreamData.constant("-")
     ])
   end
+
+  def factor do
+    StreamData.one_of([
+      StreamData.constant("*"),
+      StreamData.constant("/")
+    ])
+  end
+
+  def term do
+    StreamData.one_of([
+      StreamData.constant("+"),
+      StreamData.constant("-")
+    ])
+  end
+
+  def comparison do
+    StreamData.one_of([
+      StreamData.constant(">"),
+      StreamData.constant("<"),
+      StreamData.constant(">="),
+      StreamData.constant("<=")
+    ])
+  end
+
+  def equality do
+    StreamData.one_of([
+      StreamData.constant("!="),
+      StreamData.constant("==")
+    ])
+  end
 end
