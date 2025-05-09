@@ -46,8 +46,10 @@ defmodule Loex.Parser do
   end
 
   defp term(%__MODULE__{} = parser) do
+    # {left, %__MODULE__{input: [token | rest]} = parser} = factor(parser)
     {left, %__MODULE__{input: input} = parser} = factor(parser)
 
+    # case token.type do
     case input do
       [t | rest] when t.type in [:PLUS, :MINUS] ->
         {right, parser} = factor(%__MODULE__{input: rest})
@@ -75,7 +77,7 @@ defmodule Loex.Parser do
     case token.type do
       t when t in [:BANG, :MINUS] ->
         {expr, parser} = unary(%__MODULE__{parser | input: rest})
-        {Unary.new(token.lexeme, expr), parser}
+        {Unary.new(token.lexeme, expr, token.line), parser}
 
       _ ->
         primary(parser)
@@ -85,24 +87,26 @@ defmodule Loex.Parser do
   defp primary(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
       t when t in [:NUMBER, :STRING] ->
-        {Primary.new(token.literal), %__MODULE__{parser | input: rest}}
+        {Primary.new(token.literal, token.line), %__MODULE__{parser | input: rest}}
 
       :NIL ->
-        {Primary.new(nil), %__MODULE__{parser | input: rest}}
+        {Primary.new(nil, token.line), %__MODULE__{parser | input: rest}}
 
       :TRUE ->
-        {Primary.new(true), %__MODULE__{parser | input: rest}}
+        {Primary.new(true, token.line), %__MODULE__{parser | input: rest}}
 
       :FALSE ->
-        {Primary.new(false), %__MODULE__{parser | input: rest}}
+        {Primary.new(false, token.line), %__MODULE__{parser | input: rest}}
 
       :LEFT_PAREN ->
         {expr, %__MODULE__{input: [token | rest]} = parser} =
           expression(%__MODULE__{parser | input: rest})
 
+        starting_line = token.line
+
         case token.type do
           :RIGHT_PAREN ->
-            {Grouping.new(expr), %__MODULE__{parser | input: rest}}
+            {Grouping.new(expr, starting_line), %__MODULE__{parser | input: rest}}
 
           _ ->
             Loex.error(token.line, "Expected `)', got `#{token.lexeme}'")

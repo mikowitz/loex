@@ -17,7 +17,7 @@ defmodule Loex.ParserTest do
         %Scanner{tokens: tokens} = input_str |> Scanner.new() |> Scanner.scan()
         %Parser{ast: ast} = Parser.new(tokens) |> Parser.parse()
 
-        assert ast == %Primary{literal: input}
+        assert ast == Primary.new(input, 1)
       end
     end
 
@@ -28,7 +28,7 @@ defmodule Loex.ParserTest do
         %Scanner{tokens: tokens} = input_str |> Scanner.new() |> Scanner.scan()
         %Parser{ast: ast} = Parser.new(tokens) |> Parser.parse()
 
-        assert ast == %Grouping{expr: %Primary{literal: input}}
+        assert ast == Grouping.new(Primary.new(input, 1), 1)
       end
     end
 
@@ -85,10 +85,10 @@ defmodule Loex.ParserTest do
       input_str = if should_group, do: "(#{input_str})", else: input_str
       input_str = unary <> input_str
 
-      expr = %Primary{literal: literal}
-      expr = if should_group, do: %Grouping{expr: expr}, else: expr
+      expr = Primary.new(literal, 1)
+      expr = if should_group, do: Grouping.new(expr, 1), else: expr
 
-      {input_str, %Unary{operator: unary, expr: expr}}
+      {input_str, Unary.new(unary, expr, 1)}
     end
   end
 
