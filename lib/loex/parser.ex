@@ -20,12 +20,12 @@ defmodule Loex.Parser do
   end
 
   defp equality(%__MODULE__{} = parser) do
-    {left, %__MODULE__{input: [token | rest]} = parser} = comparison(parser)
+    {left, %__MODULE__{input: input} = parser} = comparison(parser)
 
-    case token.type do
-      t when t in [:EQUAL_EQUAL, :BANG_EQUAL] ->
+    case input do
+      [t | rest] when t.type in [:EQUAL_EQUAL, :BANG_EQUAL] ->
         {right, parser} = comparison(%__MODULE__{input: rest})
-        {Binary.new(left, token.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right), parser}
 
       _ ->
         {left, parser}
@@ -33,12 +33,12 @@ defmodule Loex.Parser do
   end
 
   defp comparison(%__MODULE__{} = parser) do
-    {left, %__MODULE__{input: [token | rest]} = parser} = term(parser)
+    {left, %__MODULE__{input: input} = parser} = term(parser)
 
-    case token.type do
-      t when t in [:LESS, :LESS_EQUAL, :GREATER, :GREATER_EQUAL] ->
+    case input do
+      [t | rest] when t.type in [:LESS, :LESS_EQUAL, :GREATER, :GREATER_EQUAL] ->
         {right, parser} = term(%__MODULE__{input: rest})
-        {Binary.new(left, token.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right), parser}
 
       _ ->
         {left, parser}
@@ -46,12 +46,12 @@ defmodule Loex.Parser do
   end
 
   defp term(%__MODULE__{} = parser) do
-    {left, %__MODULE__{input: [token | rest]} = parser} = factor(parser)
+    {left, %__MODULE__{input: input} = parser} = factor(parser)
 
-    case token.type do
-      t when t in [:PLUS, :MINUS] ->
+    case input do
+      [t | rest] when t.type in [:PLUS, :MINUS] ->
         {right, parser} = factor(%__MODULE__{input: rest})
-        {Binary.new(left, token.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right), parser}
 
       _ ->
         {left, parser}
@@ -59,12 +59,12 @@ defmodule Loex.Parser do
   end
 
   defp factor(%__MODULE__{} = parser) do
-    {left, %__MODULE__{input: [token | rest]} = parser} = unary(parser)
+    {left, %__MODULE__{input: input} = parser} = unary(parser)
 
-    case token.type do
-      t when t in [:STAR, :SLASH] ->
+    case input do
+      [t | rest] when t.type in [:STAR, :SLASH] ->
         {right, parser} = unary(%__MODULE__{input: rest})
-        {Binary.new(left, token.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right), parser}
 
       _ ->
         {left, parser}
@@ -106,12 +106,31 @@ defmodule Loex.Parser do
 
           _ ->
             Loex.error(token.line, "Expected `)', got `#{token.lexeme}'")
-            {nil, %{parser | has_errors: true}}
+            {nil, parser |> with_errors() |> synchronize()}
         end
 
       _ ->
         Loex.error(token.line, "Unexpected token `#{token.lexeme}'")
-        {nil, %{parser | has_errors: true}}
+        {nil, parser |> with_errors() |> synchronize()}
+    end
+  end
+
+  defp with_errors(%__MODULE__{} = parser) do
+    %__MODULE__{parser | has_errors: true}
+  end
+
+  defp synchronize(%__MODULE__{input: tokens} = parser) do
+    case tokens do
+      [] ->
+        parser
+
+      [token | rest] ->
+        parser = %__MODULE__{parser | input: rest}
+
+        case token.type do
+          :SEMICOLON -> {nil, parser}
+          _ -> synchronize(parser)
+        end
     end
   end
 end
