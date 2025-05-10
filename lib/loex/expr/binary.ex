@@ -1,38 +1,84 @@
 defmodule Loex.Expr.Binary do
   @moduledoc false
 
-  defstruct [:left, :op, :right]
+  defstruct [:left, :op, :right, :line]
 
-  def new(left, op, right) do
+  def new(left, op, right, line) do
     %__MODULE__{
       left: left,
       op: op,
-      right: right
+      right: right,
+      line: line
     }
   end
 
-  def evaluate(%__MODULE__{left: left, op: op, right: right}) do
+  def evaluate(%__MODULE__{left: left, op: op, right: right, line: line}) do
     with {:ok, left} <- left.__struct__.evaluate(left),
          {:ok, right} <- right.__struct__.evaluate(right) do
-      case op do
-        "-" ->
-          {:ok, left - right}
-
-        "/" ->
-          {:ok, left / right}
-
-        "*" ->
-          {:ok, left * right}
-
-        "+" ->
-          cond do
-            is_number(left) and is_number(right) -> {:ok, left + right}
-            is_binary(left) and is_binary(right) -> {:ok, left <> right}
-          end
-      end
+      evaluate_expression(left, right, op, line)
     else
       error -> error
     end
+  end
+
+  defguardp are_numbers(a, b) when is_number(a) and is_number(b)
+
+  defp evaluate_expression(left, right, "-", _) when are_numbers(left, right) do
+    {:ok, left - right}
+  end
+
+  defp evaluate_expression(left, right, "/", _) when are_numbers(left, right) do
+    {:ok, left / right}
+  end
+
+  defp evaluate_expression(left, right, "*", _) when are_numbers(left, right) do
+    {:ok, left * right}
+  end
+
+  defp evaluate_expression(left, right, "==", _) do
+    {:ok, left == right}
+  end
+
+  defp evaluate_expression(left, right, "!=", _) do
+    {:ok, left == right}
+  end
+
+  defp evaluate_expression(left, right, ">", _) when are_numbers(left, right) do
+    {:ok, left > right}
+  end
+
+  defp evaluate_expression(left, right, "<", _) when are_numbers(left, right) do
+    {:ok, left < right}
+  end
+
+  defp evaluate_expression(left, right, ">", _) when are_numbers(left, right) do
+    {:ok, left > right}
+  end
+
+  defp evaluate_expression(left, right, "<=", _) when are_numbers(left, right) do
+    {:ok, left <= right}
+  end
+
+  defp evaluate_expression(left, right, ">=", _) when are_numbers(left, right) do
+    {:ok, left >= right}
+  end
+
+  defp evaluate_expression(left, right, "+", _) when are_numbers(left, right) do
+    {:ok, left + right}
+  end
+
+  defp evaluate_expression(left, right, "+", _) when is_binary(left) and is_binary(right) do
+    {:ok, left <> right}
+  end
+
+  defp evaluate_expression(_, _, "+", line) do
+    Loex.error(line, "Both operands to `+' must be numbers or strings")
+    {:error, :bad_operand}
+  end
+
+  defp evaluate_expression(_, _, op, line) do
+    Loex.error(line, "Both operands to `#{op}' must be numbers")
+    {:error, :bad_operand}
   end
 
   defimpl String.Chars do

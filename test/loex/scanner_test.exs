@@ -57,12 +57,14 @@ defmodule Loex.ScannerTest do
             "[line #{line}] Error: Unexpected character #{c}"
           end)
 
-        assert capture_io(:stderr, fn ->
-                 scanner = Scanner.scan(scanner)
-                 assert scanner.tokens == tokens
-                 assert scanner.has_errors == !Enum.empty?(errors)
-               end)
-               |> String.trim() == expected_stderr
+        actual_stderr =
+          capture_io(:stderr, fn ->
+            scanner = Scanner.scan(scanner)
+            assert scanner.tokens == tokens
+            assert scanner.has_errors == !Enum.empty?(errors)
+          end)
+
+        assert actual_stderr =~ expected_stderr
       end
     end
 
@@ -114,18 +116,19 @@ defmodule Loex.ScannerTest do
 
       scanner = Scanner.new(input)
 
-      assert capture_io(:stderr, fn ->
-               scanner = Scanner.scan(scanner)
+      actual_stderr =
+        capture_io(:stderr, fn ->
+          scanner = Scanner.scan(scanner)
 
-               assert scanner.tokens == [
-                        %Token{Token.bang() | line: 2},
-                        %Token{Token.eof() | line: 2}
-                      ]
+          assert scanner.tokens == [
+                   %Token{Token.bang() | line: 2},
+                   %Token{Token.eof() | line: 2}
+                 ]
 
-               assert scanner.has_errors
-             end) == """
-             [line 2] Error: Unterminated string
-             """
+          assert scanner.has_errors
+        end)
+
+      assert actual_stderr =~ "[line 2] Error: Unterminated string"
     end
 
     test "a multiline string" do

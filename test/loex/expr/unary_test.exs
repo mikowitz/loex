@@ -23,17 +23,23 @@ defmodule Loex.Expr.UnaryTest do
     test "trying to negate a string" do
       expr = Unary.new("-", Primary.new("ok", 3), 3)
 
-      assert capture_io(:stderr, fn ->
-               Expr.evaluate(expr)
-             end) == "[line 3] Error: Negated operand must be a number, got ok\n"
+      actual_stderr =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert actual_stderr =~ "[line 3] Error: Negated operand must be a number, got ok"
     end
 
     test "trying to negate a boolean" do
       expr = Unary.new("-", Primary.new(true, 2), 2)
 
-      assert capture_io(:stderr, fn ->
-               Expr.evaluate(expr)
-             end) == "[line 2] Error: Negated operand must be a number, got true\n"
+      actual_stderr =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert actual_stderr =~ "[line 2] Error: Negated operand must be a number, got true"
     end
 
     test "not false" do

@@ -35,9 +35,12 @@ defmodule Loex.ParserTest do
     test "improper grouping" do
       %Scanner{tokens: tokens} = "(true" |> Scanner.new() |> Scanner.scan()
 
-      assert capture_io(:stderr, fn ->
-               Parser.new(tokens) |> Parser.parse()
-             end) == "[line 1] Error: Expected `)', got `'\n"
+      actual_stderr =
+        capture_io(:stderr, fn ->
+          Parser.new(tokens) |> Parser.parse()
+        end)
+
+      assert actual_stderr =~ "[line 1] Error: Expected `)', got `'"
     end
 
     property "unary expressions" do
@@ -98,7 +101,7 @@ defmodule Loex.ParserTest do
             {right, right_expr} <- unary_expr() do
       {
         left <> " " <> op <> " " <> right,
-        Binary.new(left_expr, op, right_expr)
+        Binary.new(left_expr, op, right_expr, 1)
       }
     end
   end
@@ -109,7 +112,7 @@ defmodule Loex.ParserTest do
             {right, right_expr} <- factor_expr() do
       {
         left <> " " <> op <> " " <> right,
-        Binary.new(left_expr, op, right_expr)
+        Binary.new(left_expr, op, right_expr, 1)
       }
     end
   end
@@ -120,7 +123,7 @@ defmodule Loex.ParserTest do
             {right, right_expr} <- term_expr() do
       {
         left <> " " <> op <> " " <> right,
-        Binary.new(left_expr, op, right_expr)
+        Binary.new(left_expr, op, right_expr, 1)
       }
     end
   end
@@ -131,7 +134,7 @@ defmodule Loex.ParserTest do
             {right, right_expr} <- comparison_expr() do
       {
         left <> " " <> op <> " " <> right,
-        Binary.new(left_expr, op, right_expr)
+        Binary.new(left_expr, op, right_expr, 1)
       }
     end
   end

@@ -25,7 +25,7 @@ defmodule Loex.Parser do
     case input do
       [t | rest] when t.type in [:EQUAL_EQUAL, :BANG_EQUAL] ->
         {right, parser} = comparison(%__MODULE__{input: rest})
-        {Binary.new(left, t.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right, t.line), parser}
 
       _ ->
         {left, parser}
@@ -38,7 +38,7 @@ defmodule Loex.Parser do
     case input do
       [t | rest] when t.type in [:LESS, :LESS_EQUAL, :GREATER, :GREATER_EQUAL] ->
         {right, parser} = term(%__MODULE__{input: rest})
-        {Binary.new(left, t.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right, t.line), parser}
 
       _ ->
         {left, parser}
@@ -53,7 +53,7 @@ defmodule Loex.Parser do
     case input do
       [t | rest] when t.type in [:PLUS, :MINUS] ->
         {right, parser} = factor(%__MODULE__{input: rest})
-        {Binary.new(left, t.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right, t.line), parser}
 
       _ ->
         {left, parser}
@@ -66,7 +66,7 @@ defmodule Loex.Parser do
     case input do
       [t | rest] when t.type in [:STAR, :SLASH] ->
         {right, parser} = unary(%__MODULE__{input: rest})
-        {Binary.new(left, t.lexeme, right), parser}
+        {Binary.new(left, t.lexeme, right, t.line), parser}
 
       _ ->
         {left, parser}
