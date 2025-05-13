@@ -3,7 +3,6 @@ defmodule Loex.ScannerTest do
   import ExUnit.CaptureIO
 
   use ExUnitProperties
-  import StreamData
 
   import Loex.Test.Support.Generators
   import Loex.Test.Support.TestHelpers
@@ -28,19 +27,8 @@ defmodule Loex.ScannerTest do
       end
     end
 
-    property "with a series of valid and invalid tokens, comments, whitespace and string and number literals" do
-      check all {input, output} <-
-                  generate_input_and_expected_output(
-                    one_of([
-                      unambiguous_token(),
-                      invalid_character(),
-                      operator(),
-                      comment(),
-                      whitespace(),
-                      string(),
-                      number()
-                    ])
-                  ) do
+    property "with all valid lox tokens" do
+      check all {input, output} <- generate_input_and_expected_output(token()) do
         tokens = Enum.filter(output, &is_struct(&1, Token))
         scanner = Scanner.new(input)
 

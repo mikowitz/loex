@@ -1,5 +1,6 @@
 defmodule Loex.Test.Support.Generators do
   import StreamData
+  use ExUnitProperties
 
   alias Loex.Token
 
@@ -78,5 +79,41 @@ defmodule Loex.Test.Support.Generators do
     |> map(fn n ->
       {to_string(n), Token.new(:NUMBER, to_string(n), n * 1.0, 1)}
     end)
+  end
+
+  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
+
+  def reserved_word do
+    @reserved_words
+    |> Enum.map(fn word ->
+      constant({
+        word,
+        Token.new(:"#{String.upcase(word)}", word, nil, 1)
+      })
+    end)
+    |> one_of()
+  end
+
+  def identifier do
+    string([?a..?z, ?A..?Z, ?1..?9, ?_], min_length: 1)
+    |> filter(&(&1 not in @reserved_words))
+    |> filter(fn <<s, _rest::binary>> -> s not in ?0..?9 end)
+    |> map(fn id ->
+      {id, Token.new(:IDENTIFIER, id, nil, 1)}
+    end)
+  end
+
+  def token do
+    one_of([
+      unambiguous_token(),
+      invalid_character(),
+      operator(),
+      comment(),
+      whitespace(),
+      string(),
+      number(),
+      identifier(),
+      reserved_word()
+    ])
   end
 end

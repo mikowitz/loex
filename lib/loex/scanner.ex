@@ -2,6 +2,10 @@ defmodule Loex.Scanner do
   alias Loex.Token
   defstruct [:input, tokens: [], current_line: 1, has_errors: false]
 
+  defguardp is_alpha(a) when a in ?a..?z or a in ?A..?Z or a == ?_
+  defguardp is_digit(d) when d in ?0..?9
+  defguardp is_alphanum(a) when is_alpha(a) or is_digit(a)
+
   def new(input) do
     %__MODULE__{input: input}
   end
@@ -34,40 +38,29 @@ defmodule Loex.Scanner do
       ">" <> rest -> scanner |> with_input(rest) |> add_token(:GREATER, ">") |> scan()
       "<=" <> rest -> scanner |> with_input(rest) |> add_token(:LESS_EQUAL, "<=") |> scan()
       "<" <> rest -> scanner |> with_input(rest) |> add_token(:LESS, "<") |> scan()
-      "//" <> _ -> scanner |> handle_comment() |> scan()
+      "//" <> _ -> scanner |> comment() |> scan()
       "/" <> rest -> scanner |> with_input(rest) |> add_token(:SLASH, "/") |> scan()
       "\t" <> rest -> scanner |> with_input(rest) |> scan()
       " " <> rest -> scanner |> with_input(rest) |> scan()
       "\n" <> rest -> scanner |> with_input(rest) |> add_line() |> scan()
-      "\"" <> rest -> scanner |> with_input(rest) |> handle_string() |> scan()
-      <<digit, _rest::binary>> when digit in ?0..?9 -> scanner |> handle_number() |> scan()
+      "\"" <> rest -> scanner |> with_input(rest) |> string() |> scan()
+      <<d, _rest::binary>> when is_digit(d) -> scanner |> number() |> scan()
+      <<a, r::binary>> when is_alpha(a) -> scanner |> with_input(r) |> identifier(a) |> scan()
       _ -> handle_unknown_character(scanner)
     end
   end
 
-  defp handle_number(%__MODULE__{input: input} = scanner) do
-    {number_str, rest} = handle_number(input, [], false)
-    {num_literal, _} = Float.parse(number_str)
-    scanner |> with_input(rest) |> add_token(:NUMBER, number_str, num_literal)
+  defp comment(%__MODULE__{input: input} = scanner) do
+    case String.split(input, "\n", parts: 2) do
+      [_rest] ->
+        scanner |> with_input("")
+
+      [_comment, rest] ->
+        scanner |> with_input(rest) |> add_line()
+    end
   end
 
-  defp handle_number("." <> _ = input, acc, true) do
-    {to_string(Enum.reverse(acc)), input}
-  end
-
-  defp handle_number("." <> rest, acc, false) do
-    handle_number(rest, [?. | acc], true)
-  end
-
-  defp handle_number(<<digit, rest::binary>>, acc, seen_dot) when digit in ?0..?9 do
-    handle_number(rest, [digit | acc], seen_dot)
-  end
-
-  defp handle_number(rest, acc, _) do
-    {to_string(Enum.reverse(acc)), rest}
-  end
-
-  defp handle_string(%__MODULE__{input: input} = scanner) do
+  defp string(%__MODULE__{input: input} = scanner) do
     case String.split(input, "\"", parts: 2) do
       [_rest] ->
         Loex.error(scanner.current_line, "Unterminated string")
@@ -79,14 +72,42 @@ defmodule Loex.Scanner do
     end
   end
 
-  defp handle_comment(%__MODULE__{input: input} = scanner) do
-    case String.split(input, "\n", parts: 2) do
-      [_rest] ->
-        scanner |> with_input("")
+  defp number(%__MODULE__{input: input} = scanner) do
+    {number_str, rest} = handle_number(input, [], false)
+    {num_literal, _} = Float.parse(number_str)
+    scanner |> with_input(rest) |> add_token(:NUMBER, number_str, num_literal)
+  end
 
-      [_comment, rest] ->
-        scanner |> with_input(rest) |> add_line()
-    end
+  @reserved_words ~w(and class else false for fun if nil or print return super this true var while)
+
+  defp identifier(%__MODULE__{input: input} = scanner, hd) do
+    {id_str, rest} = handle_identifier(input, [hd])
+    token_type = if id_str in @reserved_words, do: :"#{String.upcase(id_str)}", else: :IDENTIFIER
+    scanner |> with_input(rest) |> add_token(token_type, id_str, nil)
+  end
+
+  defp handle_number("." <> _ = input, acc, true) do
+    {to_string(Enum.reverse(acc)), input}
+  end
+
+  defp handle_number("." <> rest, acc, false) do
+    handle_number(rest, [?. | acc], true)
+  end
+
+  defp handle_number(<<d, rest::binary>>, acc, seen_dot) when is_digit(d) do
+    handle_number(rest, [d | acc], seen_dot)
+  end
+
+  defp handle_number(rest, acc, _) do
+    {to_string(Enum.reverse(acc)), rest}
+  end
+
+  defp handle_identifier(<<char, rest::binary>>, acc) when is_alphanum(char) do
+    handle_identifier(rest, [char | acc])
+  end
+
+  defp handle_identifier(rest, acc) do
+    {to_string(Enum.reverse(acc)), rest}
   end
 
   defp handle_unknown_character(%__MODULE__{} = scanner) do
