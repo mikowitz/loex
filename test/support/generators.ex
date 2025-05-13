@@ -62,4 +62,11 @@ defmodule Loex.Test.Support.Generators do
     |> Enum.map(&constant/1)
     |> one_of()
   end
+
+  def string do
+    string(Enum.concat([?a..?z, [?\n]]))
+    |> map(fn s ->
+      {~s["#{s}"], Token.new(:STRING, s, s, 1)}
+    end)
+  end
 end

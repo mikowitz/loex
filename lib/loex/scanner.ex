@@ -39,7 +39,20 @@ defmodule Loex.Scanner do
       "\t" <> rest -> scanner |> with_input(rest) |> scan()
       " " <> rest -> scanner |> with_input(rest) |> scan()
       "\n" <> rest -> scanner |> with_input(rest) |> add_line() |> scan()
+      "\"" <> rest -> scanner |> with_input(rest) |> handle_string() |> scan()
       _ -> handle_unknown_character(scanner)
+    end
+  end
+
+  defp handle_string(%__MODULE__{input: input} = scanner) do
+    case String.split(input, "\"", parts: 2) do
+      [_rest] ->
+        Loex.error(scanner.current_line, "Unterminated string")
+        scanner |> with_errors() |> with_input("")
+
+      [string, rest] ->
+        line_delta = String.codepoints(string) |> Enum.count(&(&1 == "\n"))
+        scanner |> with_input(rest) |> add_token(:STRING, string, string) |> add_lines(line_delta)
     end
   end
 
@@ -61,8 +74,13 @@ defmodule Loex.Scanner do
 
   defp with_input(%__MODULE__{} = scanner, input), do: %__MODULE__{scanner | input: input}
 
+  defp with_errors(%__MODULE__{} = scanner), do: %__MODULE__{scanner | has_errors: true}
+
   defp add_line(%__MODULE__{current_line: line} = scanner),
     do: %__MODULE__{scanner | current_line: line + 1}
+
+  defp add_lines(%__MODULE__{current_line: line} = scanner, line_delta),
+    do: %__MODULE__{scanner | current_line: line + line_delta}
 
   defp add_token(
          %__MODULE__{tokens: tokens, current_line: line} = scanner,

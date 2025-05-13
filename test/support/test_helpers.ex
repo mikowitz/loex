@@ -35,6 +35,10 @@ defmodule Loex.Test.Support.TestHelpers do
       [%Token{type: :SLASH}, :comment | rest] ->
         process_tokens(rest, line + 1, acc)
 
+      [%Token{type: :STRING, literal: str} = t | rest] ->
+        line_delta = String.codepoints(str) |> Enum.count(&(&1 == "\n"))
+        process_tokens(rest, line + line_delta, [%Token{t | line: line} | acc])
+
       [:newline | rest] ->
         process_tokens(rest, line + 1, acc)
 
