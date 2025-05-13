@@ -26,6 +26,14 @@ defmodule Loex.Scanner do
       "+" <> rest -> scanner |> with_input(rest) |> add_token(:PLUS, "+") |> scan()
       ";" <> rest -> scanner |> with_input(rest) |> add_token(:SEMICOLON, ";") |> scan()
       "*" <> rest -> scanner |> with_input(rest) |> add_token(:STAR, "*") |> scan()
+      "!=" <> rest -> scanner |> with_input(rest) |> add_token(:BANG_EQUAL, "!=") |> scan()
+      "!" <> rest -> scanner |> with_input(rest) |> add_token(:BANG, "!") |> scan()
+      "==" <> rest -> scanner |> with_input(rest) |> add_token(:EQUAL_EQUAL, "==") |> scan()
+      "=" <> rest -> scanner |> with_input(rest) |> add_token(:EQUAL, "=") |> scan()
+      ">=" <> rest -> scanner |> with_input(rest) |> add_token(:GREATER_EQUAL, ">=") |> scan()
+      ">" <> rest -> scanner |> with_input(rest) |> add_token(:GREATER, ">") |> scan()
+      "<=" <> rest -> scanner |> with_input(rest) |> add_token(:LESS_EQUAL, "<=") |> scan()
+      "<" <> rest -> scanner |> with_input(rest) |> add_token(:LESS, "<") |> scan()
       _ -> handle_unknown_character(scanner)
     end
   end

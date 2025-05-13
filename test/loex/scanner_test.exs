@@ -52,10 +52,36 @@ defmodule Loex.ScannerTest do
                     one_of([unambiguous_token(), invalid_character()])
                   ) do
         tokens = Enum.filter(output, &is_struct(&1, Token))
+        scanner = Scanner.new(input)
 
         errors =
           capture_io(:stderr, fn ->
-            scanner = Scanner.new(input)
+            scanner = Scanner.scan(scanner)
+
+            assert scanner.tokens ==
+                     tokens ++
+                       [
+                         %Token{type: :EOF, lexeme: "", literal: nil, line: 1}
+                       ]
+          end)
+
+        Enum.reject(output, &is_struct(&1, Token))
+        |> Enum.map(fn {:invalid_char, c} ->
+          assert errors =~ "[line 1] Error: Unexpected character `#{c}'"
+        end)
+      end
+    end
+
+    property "with operators" do
+      check all {input, output} <-
+                  generate_input_and_expected_output(
+                    one_of([unambiguous_token(), invalid_character(), operator()])
+                  ) do
+        tokens = Enum.filter(output, &is_struct(&1, Token))
+        scanner = Scanner.new(input)
+
+        errors =
+          capture_io(:stderr, fn ->
             scanner = Scanner.scan(scanner)
 
             assert scanner.tokens ==

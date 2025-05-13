@@ -27,4 +27,21 @@ defmodule Loex.Test.Support.Generators do
     |> Enum.map(fn c -> constant({c, {:invalid_char, c}}) end)
     |> one_of()
   end
+
+  def operator do
+    %{
+      BANG_EQUAL: "!=",
+      BANG: "!",
+      EQUAL_EQUAL: "==",
+      EQUAL: "=",
+      GREATER_EQUAL: ">=",
+      GREATER: ">",
+      LESS_EQUAL: "<=",
+      LESS: "<"
+    }
+    |> Enum.map(fn {type, lex} ->
+      constant({lex, Token.new(type, lex, nil, 1)})
+    end)
+    |> one_of()
+  end
 end
