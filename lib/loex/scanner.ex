@@ -40,8 +40,31 @@ defmodule Loex.Scanner do
       " " <> rest -> scanner |> with_input(rest) |> scan()
       "\n" <> rest -> scanner |> with_input(rest) |> add_line() |> scan()
       "\"" <> rest -> scanner |> with_input(rest) |> handle_string() |> scan()
+      <<digit, _rest::binary>> when digit in ?0..?9 -> scanner |> handle_number() |> scan()
       _ -> handle_unknown_character(scanner)
     end
+  end
+
+  defp handle_number(%__MODULE__{input: input} = scanner) do
+    {number_str, rest} = handle_number(input, [], false)
+    {num_literal, _} = Float.parse(number_str)
+    scanner |> with_input(rest) |> add_token(:NUMBER, number_str, num_literal)
+  end
+
+  defp handle_number("." <> _ = input, acc, true) do
+    {to_string(Enum.reverse(acc)), input}
+  end
+
+  defp handle_number("." <> rest, acc, false) do
+    handle_number(rest, [?. | acc], true)
+  end
+
+  defp handle_number(<<digit, rest::binary>>, acc, seen_dot) when digit in ?0..?9 do
+    handle_number(rest, [digit | acc], seen_dot)
+  end
+
+  defp handle_number(rest, acc, _) do
+    {to_string(Enum.reverse(acc)), rest}
   end
 
   defp handle_string(%__MODULE__{input: input} = scanner) do

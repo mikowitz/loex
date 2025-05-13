@@ -69,4 +69,14 @@ defmodule Loex.Test.Support.Generators do
       {~s["#{s}"], Token.new(:STRING, s, s, 1)}
     end)
   end
+
+  def number do
+    one_of([
+      integer(0..999),
+      float(min: 0.5, max: 999.5)
+    ])
+    |> map(fn n ->
+      {to_string(n), Token.new(:NUMBER, to_string(n), n * 1.0, 1)}
+    end)
+  end
 end

@@ -28,7 +28,7 @@ defmodule Loex.ScannerTest do
       end
     end
 
-    property "with a series of valid and invalid tokens, comments, whitespace and string literals" do
+    property "with a series of valid and invalid tokens, comments, whitespace and string and number literals" do
       check all {input, output} <-
                   generate_input_and_expected_output(
                     one_of([
@@ -37,7 +37,8 @@ defmodule Loex.ScannerTest do
                       operator(),
                       comment(),
                       whitespace(),
-                      string()
+                      string(),
+                      number()
                     ])
                   ) do
         tokens = Enum.filter(output, &is_struct(&1, Token))
