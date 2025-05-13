@@ -1,18 +1,8 @@
 defmodule Loex do
-  @moduledoc """
-  Documentation for `Loex`.
-  """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Loex.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def error(line, message) do
+    IO.puts(
+      :stderr,
+      IO.ANSI.format([:red, "[line #{line}] Error: #{message}"])
+    )
   end
 end
