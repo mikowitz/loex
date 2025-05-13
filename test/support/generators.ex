@@ -14,7 +14,8 @@ defmodule Loex.Test.Support.Generators do
       MINUS: "-",
       PLUS: "+",
       SEMICOLON: ";",
-      STAR: "*"
+      STAR: "*",
+      SLASH: "/"
     }
     |> Enum.map(fn {type, lex} ->
       constant({lex, Token.new(type, lex, nil, 1)})
@@ -42,6 +43,23 @@ defmodule Loex.Test.Support.Generators do
     |> Enum.map(fn {type, lex} ->
       constant({lex, Token.new(type, lex, nil, 1)})
     end)
+    |> one_of()
+  end
+
+  def comment do
+    string(:ascii)
+    |> map(fn comment ->
+      {"// #{comment}\n", :comment}
+    end)
+  end
+
+  def whitespace do
+    [
+      {" ", :space},
+      {"\n", :newline},
+      {"\t", :tab}
+    ]
+    |> Enum.map(&constant/1)
     |> one_of()
   end
 end

@@ -1,4 +1,6 @@
 defmodule Loex.CLI do
+  alias Loex.Scanner
+
   def main(args) do
     case args do
       [] ->
@@ -42,6 +44,11 @@ defmodule Loex.CLI do
   end
 
   defp run(contents) do
-    IO.puts(contents)
+    scanner = Scanner.new(contents)
+    scanner = Scanner.scan(scanner)
+
+    for token <- scanner.tokens do
+      IO.inspect(token)
+    end
   end
 end

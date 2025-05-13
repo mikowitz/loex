@@ -12,24 +12,48 @@ defmodule Loex.Test.Support.TestHelpers do
     end
   end
 
-  defp process_tokens(tokens), do: process_tokens(tokens, [])
+  defp process_tokens(tokens), do: process_tokens(tokens, 1, [])
 
-  defp process_tokens([], acc), do: Enum.reverse(acc)
+  defp process_tokens([], _line, acc), do: Enum.reverse(acc)
 
-  defp process_tokens(tokens, acc) do
+  defp process_tokens(tokens, line, acc) do
     case tokens do
-      [%Token{type: type, lexeme: lex, line: line}, %Token{type: :EQUAL} | rest]
+      [%Token{type: type, lexeme: lex}, %Token{type: :EQUAL} | rest]
       when type in ~w(BANG EQUAL LESS GREATER)a ->
-        process_tokens(rest, [Token.new(:"#{type}_EQUAL", lex <> "=", nil, line) | acc])
+        process_tokens(rest, line, [Token.new(:"#{type}_EQUAL", lex <> "=", nil, line) | acc])
 
-      [%Token{type: type, lexeme: lex, line: line}, %Token{type: :EQUAL_EQUAL} | rest]
+      [%Token{type: type, lexeme: lex}, %Token{type: :EQUAL_EQUAL} | rest]
       when type in ~w(BANG EQUAL LESS GREATER)a ->
-        process_tokens([Token.new(:EQUAL, "=", nil, line) | rest], [
+        process_tokens([Token.new(:EQUAL, "=", nil, line) | rest], line, [
           Token.new(:"#{type}_EQUAL", lex <> "=", nil, line) | acc
         ])
 
+      [%Token{type: :SLASH}, %Token{type: :SLASH} | rest] ->
+        rest = drop_until_newline(rest)
+        process_tokens(rest, line + 1, acc)
+
+      [%Token{type: :SLASH}, :comment | rest] ->
+        process_tokens(rest, line + 1, acc)
+
+      [:newline | rest] ->
+        process_tokens(rest, line + 1, acc)
+
+      [:comment | rest] ->
+        process_tokens(rest, line + 1, acc)
+
+      [{:invalid_char, c} | rest] ->
+        process_tokens(rest, line, [{:invalid_char, c, line} | acc])
+
+      [%Token{} = t | rest] ->
+        process_tokens(rest, line, [%Token{t | line: line} | acc])
+
       [t | rest] ->
-        process_tokens(rest, [t | acc])
+        process_tokens(rest, line, [t | acc])
     end
   end
+
+  defp drop_until_newline([]), do: []
+  defp drop_until_newline([:newline | rest]), do: rest
+  defp drop_until_newline([:comment | rest]), do: rest
+  defp drop_until_newline([_x | rest]), do: drop_until_newline(rest)
 end

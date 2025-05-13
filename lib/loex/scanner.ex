@@ -34,7 +34,22 @@ defmodule Loex.Scanner do
       ">" <> rest -> scanner |> with_input(rest) |> add_token(:GREATER, ">") |> scan()
       "<=" <> rest -> scanner |> with_input(rest) |> add_token(:LESS_EQUAL, "<=") |> scan()
       "<" <> rest -> scanner |> with_input(rest) |> add_token(:LESS, "<") |> scan()
+      "//" <> _ -> scanner |> handle_comment() |> scan()
+      "/" <> rest -> scanner |> with_input(rest) |> add_token(:SLASH, "/") |> scan()
+      "\t" <> rest -> scanner |> with_input(rest) |> scan()
+      " " <> rest -> scanner |> with_input(rest) |> scan()
+      "\n" <> rest -> scanner |> with_input(rest) |> add_line() |> scan()
       _ -> handle_unknown_character(scanner)
+    end
+  end
+
+  defp handle_comment(%__MODULE__{input: input} = scanner) do
+    case String.split(input, "\n", parts: 2) do
+      [_rest] ->
+        scanner |> with_input("")
+
+      [_comment, rest] ->
+        scanner |> with_input(rest) |> add_line()
     end
   end
 
@@ -45,6 +60,9 @@ defmodule Loex.Scanner do
   end
 
   defp with_input(%__MODULE__{} = scanner, input), do: %__MODULE__{scanner | input: input}
+
+  defp add_line(%__MODULE__{current_line: line} = scanner),
+    do: %__MODULE__{scanner | current_line: line + 1}
 
   defp add_token(
          %__MODULE__{tokens: tokens, current_line: line} = scanner,
