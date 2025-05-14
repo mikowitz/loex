@@ -1,7 +1,3 @@
 import Config
 
-config :mix_test_watch,
-  tasks: [
-    "test",
-    "credo --strict --all"
-  ]
+import_config("#{Mix.env()}.exs")
