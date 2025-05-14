@@ -1,8 +1,15 @@
 defmodule LoexTest do
   use ExUnit.Case
-  doctest Loex
+  import ExUnit.CaptureIO
 
-  test "greets the world" do
-    assert Loex.hello() == :world
+  describe "error/2" do
+    test "writes the correct error to stderr" do
+      output =
+        capture_io(:stderr, fn ->
+          Loex.error(3, "it doesn't work")
+        end)
+
+      assert output =~ "[line 3] Error: it doesn't work"
+    end
   end
 end
