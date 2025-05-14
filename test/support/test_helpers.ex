@@ -30,6 +30,9 @@ defmodule Loex.Test.Support.TestHelpers do
       [:newline | rest] ->
         process_tokens(rest, line + 1, acc)
 
+      [{:block_comment, lines} | rest] ->
+        process_tokens(rest, line + lines, acc)
+
       [:comment | rest] ->
         process_tokens(rest, line + 1, acc)
 

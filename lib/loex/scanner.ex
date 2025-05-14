@@ -39,6 +39,7 @@ defmodule Loex.Scanner do
       "<=" <> rest -> scanner |> with_input(rest) |> add_token(:LESS_EQUAL, "<=") |> scan()
       "<" <> rest -> scanner |> with_input(rest) |> add_token(:LESS, "<") |> scan()
       "//" <> _ -> scanner |> comment() |> scan()
+      "/*" <> _ -> scanner |> block_comment() |> scan()
       "/" <> rest -> scanner |> with_input(rest) |> add_token(:SLASH, "/") |> scan()
       "\t" <> rest -> scanner |> with_input(rest) |> scan()
       " " <> rest -> scanner |> with_input(rest) |> scan()
@@ -57,6 +58,17 @@ defmodule Loex.Scanner do
 
       [_comment, rest] ->
         scanner |> with_input(rest) |> add_line()
+    end
+  end
+
+  defp block_comment(%__MODULE__{input: input} = scanner) do
+    case String.split(input, "*/", parts: 2) do
+      [_rest] ->
+        scanner |> with_input("")
+
+      [comment, rest] ->
+        line_delta = String.codepoints(comment) |> Enum.count(&(&1 == "\n"))
+        scanner |> with_input(rest) |> add_lines(line_delta)
     end
   end
 

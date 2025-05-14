@@ -47,11 +47,27 @@ defmodule Loex.Test.Support.Generators do
     |> one_of()
   end
 
-  def comment do
+  def single_line_comment do
     string(:ascii)
     |> map(fn comment ->
       {"// #{comment}\n", :comment}
     end)
+  end
+
+  def block_comment do
+    list_of(string(:alphanumeric))
+    |> map(fn ss ->
+      comment = "/* " <> Enum.join(ss, "\n") <> " */"
+      line_delta = String.codepoints(comment) |> Enum.count(&(&1 == "\n"))
+      {"/* " <> Enum.join(ss, "\n") <> " */", {:block_comment, line_delta}}
+    end)
+  end
+
+  def comment do
+    one_of([
+      single_line_comment(),
+      block_comment()
+    ])
   end
 
   def whitespace do
