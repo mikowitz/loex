@@ -1,4 +1,8 @@
 defmodule Loex.CLI do
+  @moduledoc """
+  The primary entrypoint for interacting with the Loex interpreter.
+  """
+
   alias Loex.Scanner
 
   def main(args) do
@@ -48,7 +52,7 @@ defmodule Loex.CLI do
     scanner = Scanner.scan(scanner)
 
     for token <- scanner.tokens do
-      IO.inspect(token)
+      IO.puts("#{inspect(token)}")
     end
   end
 end

@@ -7,8 +7,8 @@ defmodule Loex.ScannerTest do
   import Loex.Test.Support.Generators
   import Loex.Test.Support.TestHelpers
 
-  alias Loex.Token
   alias Loex.Scanner
+  alias Loex.Token
 
   describe "scan/1" do
     test "with empty input" do

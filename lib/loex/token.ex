@@ -1,4 +1,8 @@
 defmodule Loex.Token do
+  @moduledoc """
+  Models a single token in a Lox script
+  """
+
   @token_types [
     :LEFT_PAREN,
     :RIGHT_PAREN,

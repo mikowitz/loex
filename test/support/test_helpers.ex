@@ -1,4 +1,6 @@
 defmodule Loex.Test.Support.TestHelpers do
+  @moduledoc false
+
   use ExUnitProperties
   import StreamData
 

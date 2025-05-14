@@ -1,4 +1,6 @@
 defmodule Loex.Test.Support.Generators do
+  @moduledoc false
+
   import StreamData
   use ExUnitProperties
 

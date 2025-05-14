@@ -23,6 +23,7 @@ defmodule Loex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:credo, "~> 1.7.12", only: [:test], runtime: false},
       {:mix_test_watch, "~> 1.2.0", only: [:test], runtime: false},
       {:stream_data, "~> 1.2.0"}
     ]
