@@ -42,5 +42,21 @@ defmodule Loex.ParserTest do
         assert error =~ "[line 1] Error: Unexpected EOF"
       end
     end
+
+    property "comma operator" do
+      check all {a, a_str} <- expression(),
+                {b, b_str} <- expression(),
+                {c, c_str} <- expression() do
+        tokens =
+          a ++
+            [Token.new(:COMMA, ",", nil, 1)] ++
+            b ++ [Token.new(:COMMA, ",", nil, 1)] ++ c
+
+        ast_str = a_str <> " , " <> b_str <> " , " <> c_str
+
+        parser = Parser.new(tokens) |> Parser.parse()
+        assert Expr.to_string(parser.ast) == ast_str
+      end
+    end
   end
 end

@@ -3,7 +3,7 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
-  alias Loex.Expr.{Binary, Grouping, Literal, Unary}
+  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Unary}
   alias Loex.Token
 
   defstruct [:input, :ast, has_errors: false]
@@ -19,7 +19,25 @@ defmodule Loex.Parser do
     %__MODULE__{parser | ast: ast}
   end
 
-  def expression(%__MODULE__{} = parser), do: equality(parser)
+  def expression(%__MODULE__{} = parser), do: comma_series(parser)
+
+  def comma_series(%__MODULE__{} = parser) do
+    {expr, parser} = equality(parser)
+
+    comma_series_loop(expr, parser)
+  end
+
+  defp comma_series_loop(expr, parser) do
+    case parser.input do
+      [%Token{type: :COMMA} | rest] ->
+        {right, parser} = equality(%{parser | input: rest})
+        expr = CommaSeries.new(expr, right)
+        comma_series_loop(expr, parser)
+
+      _ ->
+        {expr, parser}
+    end
+  end
 
   defp equality(%__MODULE__{} = parser) do
     {expr, parser} = comparison(parser)
