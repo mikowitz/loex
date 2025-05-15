@@ -42,6 +42,19 @@ defmodule Loex.ScannerTest do
         assert_stderr_matches(errors, output)
       end
     end
+
+    test "ternary expression" do
+      scanner = Scanner.new("true ? 1 : 3")
+      scanner = Scanner.scan(scanner)
+
+      assert_tokens(scanner, [
+        Token.new(:TRUE, "true", nil, 1),
+        Token.new(:QUESTION_MARK, "?", nil, 1),
+        Token.new(:NUMBER, "1", 1.0, 1),
+        Token.new(:COLON, ":", nil, 1),
+        Token.new(:NUMBER, "3", 3.0, 1)
+      ])
+    end
   end
 
   defp assert_stderr_matches(output, tokens) do

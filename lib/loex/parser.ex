@@ -3,7 +3,7 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
-  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Unary}
+  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary}
   alias Loex.Token
 
   defstruct [:input, :ast, has_errors: false]
@@ -22,7 +22,7 @@ defmodule Loex.Parser do
   def expression(%__MODULE__{} = parser), do: comma_series(parser)
 
   def comma_series(%__MODULE__{} = parser) do
-    {expr, parser} = equality(parser)
+    {expr, parser} = ternary(parser)
 
     comma_series_loop(expr, parser)
   end
@@ -30,12 +30,34 @@ defmodule Loex.Parser do
   defp comma_series_loop(expr, parser) do
     case parser.input do
       [%Token{type: :COMMA} | rest] ->
-        {right, parser} = equality(%{parser | input: rest})
+        {right, parser} = ternary(%{parser | input: rest})
         expr = CommaSeries.new(expr, right)
         comma_series_loop(expr, parser)
 
       _ ->
         {expr, parser}
+    end
+  end
+
+  def ternary(%__MODULE__{} = parser) do
+    {condition, %__MODULE__{input: input} = parser} = equality(parser)
+
+    case input do
+      [t | rest] when t.type == :QUESTION_MARK ->
+        {left, %__MODULE__{input: input} = parser} = ternary(%__MODULE__{input: rest})
+
+        case input do
+          [t | rest] when t.type == :COLON ->
+            {right, parser} = ternary(%__MODULE__{input: rest})
+            {Ternary.new(condition, left, right), parser}
+
+          _ ->
+            Loex.error(1, "Expected `:' in ternary expression")
+            {nil, parser |> with_errors() |> synchronize()}
+        end
+
+      _ ->
+        {condition, parser}
     end
   end
 
