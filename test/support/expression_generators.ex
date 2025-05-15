@@ -3,6 +3,7 @@ defmodule Loex.Test.Support.ExpressionGenerators do
 
   use ExUnitProperties
 
+  alias Loex.Expr.Literal
   alias Loex.Token
 
   def expression do
@@ -148,5 +149,16 @@ defmodule Loex.Test.Support.ExpressionGenerators do
       constant({Token.new(:EQUAL_EQUAL, "==", nil, 1), "=="}),
       constant({Token.new(:BANG_EQUAL, "!=", nil, 1), "!="})
     ])
+  end
+
+  def literal do
+    one_of([
+      constant(true),
+      constant(false),
+      constant(nil),
+      float(min: 0.5, max: 999.5),
+      integer(0..999)
+    ])
+    |> map(fn c -> Literal.new(c) end)
   end
 end

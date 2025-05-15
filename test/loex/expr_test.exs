@@ -1,0 +1,17 @@
+defmodule Loex.ExprTest do
+  use ExUnit.Case, async: true
+
+  import Loex.Test.Support.ExpressionGenerators
+  use ExUnitProperties
+
+  alias Loex.Expr
+  alias Loex.Expr.Literal
+
+  describe "evaluating" do
+    property "a literal expression" do
+      check all %{value: value} = literal <- literal() do
+        assert Expr.evaluate(literal) == value
+      end
+    end
+  end
+end
