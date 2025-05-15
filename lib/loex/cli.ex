@@ -3,7 +3,8 @@ defmodule Loex.CLI do
   The primary entrypoint for interacting with the Loex interpreter.
   """
 
-  alias Loex.Scanner
+  alias Loex.Expr
+  alias Loex.{Parser, Scanner}
 
   def main(args) do
     case args do
@@ -51,8 +52,11 @@ defmodule Loex.CLI do
     scanner = Scanner.new(contents)
     scanner = Scanner.scan(scanner)
 
-    for token <- scanner.tokens do
-      IO.puts("#{inspect(token)}")
+    parser = Parser.new(scanner.tokens)
+    parser = Parser.parse(parser)
+
+    if !parser.has_errors && !is_nil(parser.ast) do
+      IO.puts(Expr.to_string(parser.ast))
     end
   end
 end

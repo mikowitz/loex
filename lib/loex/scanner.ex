@@ -31,6 +31,8 @@ defmodule Loex.Scanner do
   def scan(%{input: "+" <> rest} = scanner), do: push_token(scanner, rest, :PLUS, "+")
   def scan(%{input: ";" <> rest} = scanner), do: push_token(scanner, rest, :SEMICOLON, ";")
   def scan(%{input: "*" <> rest} = scanner), do: push_token(scanner, rest, :STAR, "*")
+  def scan(%{input: "?" <> rest} = scanner), do: push_token(scanner, rest, :QUESTION_MARK, "?")
+  def scan(%{input: ":" <> rest} = scanner), do: push_token(scanner, rest, :COLON, ":")
   def scan(%{input: "!=" <> rest} = scanner), do: push_token(scanner, rest, :BANG_EQUAL, "!=")
   def scan(%{input: "!" <> rest} = scanner), do: push_token(scanner, rest, :BANG, "!")
   def scan(%{input: "==" <> rest} = scanner), do: push_token(scanner, rest, :EQUAL_EQUAL, "==")
