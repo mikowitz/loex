@@ -3,7 +3,7 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
-  alias Loex.Expr.{Grouping, Literal, Unary}
+  alias Loex.Expr.{Binary, Grouping, Literal, Unary}
   alias Loex.Token
 
   defstruct [:input, :ast, has_errors: false]
@@ -15,7 +15,43 @@ defmodule Loex.Parser do
     %__MODULE__{parser | ast: ast}
   end
 
-  def expression(%__MODULE__{} = parser), do: unary(parser)
+  def expression(%__MODULE__{} = parser), do: term(parser)
+
+  defp term(%__MODULE__{} = parser) do
+    {expr, parser} = factor(parser)
+
+    term_loop(expr, parser)
+  end
+
+  def term_loop(expr, %__MODULE__{} = parser) do
+    case parser.input do
+      [%Token{type: t} = token | rest] when t in [:PLUS, :MINUS] ->
+        {right, parser} = factor(%{parser | input: rest})
+        expr = Binary.new(expr, token.lexeme, right)
+        term_loop(expr, parser)
+
+      _ ->
+        {expr, parser}
+    end
+  end
+
+  defp factor(%__MODULE__{} = parser) do
+    {expr, parser} = unary(parser)
+
+    factor_loop(expr, parser)
+  end
+
+  def factor_loop(expr, %__MODULE__{} = parser) do
+    case parser.input do
+      [%Token{type: t} = token | rest] when t in [:SLASH, :STAR] ->
+        {right, parser} = unary(%{parser | input: rest})
+        expr = Binary.new(expr, token.lexeme, right)
+        factor_loop(expr, parser)
+
+      _ ->
+        {expr, parser}
+    end
+  end
 
   defp unary(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
