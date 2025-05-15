@@ -10,6 +10,10 @@ defmodule Loex.Parser do
 
   def new(input), do: %__MODULE__{input: input}
 
+  def parse(%__MODULE__{input: [%Token{type: :EOF}]} = parser) do
+    parser
+  end
+
   def parse(%__MODULE__{} = parser) do
     {ast, parser} = expression(parser)
     %__MODULE__{parser | ast: ast}
@@ -100,34 +104,56 @@ defmodule Loex.Parser do
     end
   end
 
-  defp primary(%__MODULE__{input: [token | rest]} = parser) do
+  defp primary(%__MODULE__{input: [%Token{type: :FALSE} | rest]} = parser),
+    do: {Literal.new(false), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :TRUE} | rest]} = parser),
+    do: {Literal.new(true), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :NIL} | rest]} = parser),
+    do: {Literal.new(nil), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :STRING} = token | rest]} = parser),
+    do: {Literal.new(token.literal), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :NUMBER} = token | rest]} = parser),
+    do: {Literal.new(token.literal), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :LEFT_PAREN} = token | rest]} = parser) do
+    {expr, %{input: input} = parser} = expression(%{parser | input: rest})
+
+    case input do
+      [%Token{type: :RIGHT_PAREN} | rest] ->
+        {Grouping.new(expr), %{parser | input: rest}}
+
+      _ ->
+        Loex.error(token.line, "Expect `)' after expression.")
+        {nil, parser}
+    end
+  end
+
+  defp primary(%__MODULE__{input: [%Token{type: :EOF} = token]} = parser) do
+    Loex.error(token.line, "Unexpected EOF")
+    {nil, parser |> with_errors()}
+  end
+
+  defp primary(%__MODULE__{input: [token | _]} = parser) do
+    Loex.error(token.line, "Unexpected character `#{token.lexeme}'")
+    {nil, parser |> with_errors() |> synchronize |> parse()}
+  end
+
+  defp with_errors(%__MODULE__{} = parser), do: %{parser | has_errors: true}
+
+  defp synchronize(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
-      :FALSE ->
-        {Literal.new(false), %{parser | input: rest}}
+      :SEMICOLON ->
+        %{parser | input: rest}
 
-      :TRUE ->
-        {Literal.new(true), %{parser | input: rest}}
+      t when t in [:CLASS, :FUN, :VAR, :FOR, :IF, :WHILE, :PRINT, :RETURN] ->
+        parser
 
-      :NIL ->
-        {Literal.new(nil), %{parser | input: rest}}
-
-      :STRING ->
-        {Literal.new(token.literal), %{parser | input: rest}}
-
-      :NUMBER ->
-        {Literal.new(token.literal), %{parser | input: rest}}
-
-      :LEFT_PAREN ->
-        {expr, %{input: input} = parser} = expression(%{parser | input: rest})
-
-        case input do
-          [%Token{type: :RIGHT_PAREN} | rest] ->
-            {Grouping.new(expr), %{parser | input: rest}}
-
-          _ ->
-            Loex.error(token.line, "Expect `)' after expression.")
-            {nil, parser}
-        end
+      _ ->
+        %{parser | input: rest} |> synchronize()
     end
   end
 end

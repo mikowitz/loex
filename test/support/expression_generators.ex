@@ -127,7 +127,7 @@ defmodule Loex.Test.Support.ExpressionGenerators do
     ])
   end
 
-  defp term_operator do
+  def term_operator do
     one_of([
       constant({Token.new(:PLUS, "+", nil, 1), "+"}),
       constant({Token.new(:MINUS, "-", nil, 1), "-"})

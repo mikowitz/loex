@@ -28,5 +28,19 @@ defmodule Loex.ParserTest do
         assert error =~ "[line 1] Error: Expect `)' after expression."
       end
     end
+
+    property "dangling operator" do
+      check all {tokens, _} <- factor_expr(),
+                {op_token, _} <- term_operator() do
+        tokens = tokens ++ [op_token, Token.new(:EOF, "", nil, 1)]
+
+        error =
+          capture_io(:stderr, fn ->
+            Parser.new(tokens) |> Parser.parse()
+          end)
+
+        assert error =~ "[line 1] Error: Unexpected EOF"
+      end
+    end
   end
 end
