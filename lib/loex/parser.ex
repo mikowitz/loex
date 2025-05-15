@@ -15,7 +15,43 @@ defmodule Loex.Parser do
     %__MODULE__{parser | ast: ast}
   end
 
-  def expression(%__MODULE__{} = parser), do: term(parser)
+  def expression(%__MODULE__{} = parser), do: equality(parser)
+
+  defp equality(%__MODULE__{} = parser) do
+    {expr, parser} = comparison(parser)
+
+    equality_loop(expr, parser)
+  end
+
+  def equality_loop(expr, %__MODULE__{} = parser) do
+    case parser.input do
+      [%Token{type: t} = token | rest] when t in [:EQUAL_EQUAL, :BANG_EQUAL] ->
+        {right, parser} = comparison(%{parser | input: rest})
+        expr = Binary.new(expr, token.lexeme, right)
+        equality_loop(expr, parser)
+
+      _ ->
+        {expr, parser}
+    end
+  end
+
+  defp comparison(%__MODULE__{} = parser) do
+    {expr, parser} = term(parser)
+
+    comparison_loop(expr, parser)
+  end
+
+  def comparison_loop(expr, %__MODULE__{} = parser) do
+    case parser.input do
+      [%Token{type: t} = token | rest] when t in [:GREATER, :LESS, :GREATER_EQUAL, :LESS_EQUAL] ->
+        {right, parser} = term(%{parser | input: rest})
+        expr = Binary.new(expr, token.lexeme, right)
+        comparison_loop(expr, parser)
+
+      _ ->
+        {expr, parser}
+    end
+  end
 
   defp term(%__MODULE__{} = parser) do
     {expr, parser} = factor(parser)
