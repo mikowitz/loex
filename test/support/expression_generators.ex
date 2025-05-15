@@ -3,6 +3,7 @@ defmodule Loex.Test.Support.ExpressionGenerators do
 
   use ExUnitProperties
 
+  alias Loex.Expr.Grouping
   alias Loex.Expr.Literal
   alias Loex.Token
 
@@ -159,6 +160,11 @@ defmodule Loex.Test.Support.ExpressionGenerators do
       float(min: 0.5, max: 999.5),
       integer(0..999)
     ])
-    |> map(fn c -> Literal.new(c) end)
+    |> map(&Literal.new/1)
+  end
+
+  def grouping do
+    literal()
+    |> map(&Grouping.new/1)
   end
 end

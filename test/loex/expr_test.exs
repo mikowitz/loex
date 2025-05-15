@@ -13,5 +13,11 @@ defmodule Loex.ExprTest do
         assert Expr.evaluate(literal) == value
       end
     end
+
+    property "a grouping expression" do
+      check all %{expr: %{value: value}} = grouping <- grouping() do
+        assert Expr.evaluate(grouping) == value
+      end
+    end
   end
 end
