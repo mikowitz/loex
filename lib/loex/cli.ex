@@ -3,8 +3,7 @@ defmodule Loex.CLI do
   The primary entrypoint for interacting with the Loex interpreter.
   """
 
-  alias Loex.Expr
-  alias Loex.{Parser, Scanner}
+  alias Loex.{Parser, Scanner, Statement}
 
   def main(args) do
     case args do
@@ -55,9 +54,10 @@ defmodule Loex.CLI do
     parser = Parser.new(scanner.tokens)
     parser = Parser.parse(parser)
 
-    if !parser.has_errors && !is_nil(parser.ast) do
-      value = Expr.evaluate(parser.ast)
-      if is_nil(value), do: IO.puts("nil"), else: IO.puts(to_string(value))
+    if !parser.has_errors && !Enum.empty?(parser.program) do
+      for statement <- parser.program do
+        Statement.interpret(statement)
+      end
     end
   end
 end

@@ -5,13 +5,20 @@ defmodule Loex.ParserTest do
   import Loex.Test.Support.ExpressionGenerators
   use ExUnitProperties
 
-  alias Loex.{Expr, Parser, Token}
+  alias Loex.{Parser, Statement, Token}
 
   describe "parse/1" do
     property "a valid expression" do
       check all {tokens, ast_str} <- expression() do
+        tokens =
+          tokens ++
+            [
+              Token.new(:SEMICOLON, ",", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
+
         %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
-        assert Expr.to_string(ast) == ast_str
+        assert Statement.to_string(ast) == "(statement #{ast_str} ;)"
       end
     end
 
@@ -19,12 +26,14 @@ defmodule Loex.ParserTest do
       check all {tokens, _} <- expression() do
         tokens = [Token.new(:LEFT_PAREN, "(", nil, 1) | tokens]
 
-        error =
-          capture_io(:stderr, fn ->
-            Parser.new(tokens) |> Parser.parse()
-          end)
+        assert_raise RuntimeError, "Expect `;' after value", fn ->
+          error =
+            capture_io(:stderr, fn ->
+              Parser.new(tokens) |> Parser.parse()
+            end)
 
-        assert error =~ "[line 1] Error: Expect `)' after expression."
+          assert error =~ "[line 1] Error: Expect `)' after expression."
+        end
       end
     end
 
@@ -33,12 +42,14 @@ defmodule Loex.ParserTest do
                 {op_token, _} <- term_operator() do
         tokens = tokens ++ [op_token, Token.new(:EOF, "", nil, 1)]
 
-        error =
-          capture_io(:stderr, fn ->
-            Parser.new(tokens) |> Parser.parse()
-          end)
+        assert_raise RuntimeError, "Expect `;' after value", fn ->
+          error =
+            capture_io(:stderr, fn ->
+              Parser.new(tokens) |> Parser.parse()
+            end)
 
-        assert error =~ "[line 1] Error: Unexpected EOF"
+          assert error =~ "[line 1] Error: Unexpected EOF"
+        end
       end
     end
 
@@ -49,12 +60,18 @@ defmodule Loex.ParserTest do
         tokens =
           a ++
             [Token.new(:COMMA, ",", nil, 1)] ++
-            b ++ [Token.new(:COMMA, ",", nil, 1)] ++ c
+            b ++
+            [Token.new(:COMMA, ",", nil, 1)] ++
+            c ++
+            [
+              Token.new(:SEMICOLON, ";", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
 
-        ast_str = a_str <> " , " <> b_str <> " , " <> c_str
+        ast_str = "(statement " <> a_str <> " , " <> b_str <> " , " <> c_str <> " ;)"
 
         %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
-        assert Expr.to_string(ast) == ast_str
+        assert Statement.to_string(ast) == ast_str
       end
     end
 
@@ -65,12 +82,33 @@ defmodule Loex.ParserTest do
         tokens =
           a ++
             [Token.new(:QUESTION_MARK, "?", nil, 1)] ++
-            b ++ [Token.new(:COLON, ":", nil, 1)] ++ c
+            b ++
+            [Token.new(:COLON, ":", nil, 1)] ++
+            c ++
+            [
+              Token.new(:SEMICOLON, ";", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
 
-        ast_str = a_str <> " ? " <> b_str <> " : " <> c_str
+        ast_str = "(statement " <> a_str <> " ? " <> b_str <> " : " <> c_str <> " ;)"
 
         %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
-        assert Expr.to_string(ast) == ast_str
+        assert Statement.to_string(ast) == ast_str
+      end
+    end
+
+    property "print statement" do
+      check all {tokens, ast_str} <- expression() do
+        tokens =
+          [Token.new(:PRINT, "print", nil, 1) | tokens] ++
+            [
+              Token.new(:SEMICOLON, ";", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
+
+        p_str = "(print " <> ast_str <> " ;)"
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Statement.to_string(ast) == p_str
       end
     end
   end

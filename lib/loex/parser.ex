@@ -3,6 +3,7 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
+  alias Loex.Statement
   alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary}
   alias Loex.Token
 
@@ -23,7 +24,43 @@ defmodule Loex.Parser do
     %__MODULE__{parser | program: [ast | program]} |> parse()
   end
 
-  def statement(parser), do: expression(parser)
+  def statement(%{input: [%Token{type: :PRINT} | rest]} = parser) do
+    print_statement(%{parser | input: rest})
+  end
+
+  def statement(parser) do
+    expression_statement(parser)
+  end
+
+  defp print_statement(parser) do
+    {expr, parser} = expression(parser)
+
+    case parser.input do
+      [%Token{type: :SEMICOLON} | rest] ->
+        {
+          Statement.Print.new(expr),
+          %{parser | input: rest}
+        }
+
+      _ ->
+        raise "Expect `;' after value"
+    end
+  end
+
+  def expression_statement(parser) do
+    {expr, parser} = expression(parser)
+
+    case parser.input do
+      [%Token{type: :SEMICOLON} | rest] ->
+        {
+          Statement.Expression.new(expr),
+          %{parser | input: rest}
+        }
+
+      _ ->
+        raise "Expect `;' after value"
+    end
+  end
 
   def expression(%__MODULE__{} = parser), do: comma_series(parser)
 
