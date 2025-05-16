@@ -30,7 +30,11 @@ defmodule Loex.Expr.Binary do
     def do_evaluate("-", left, right, _) when are_numbers(left, right), do: left - right
 
     def do_evaluate("/", left, right, line) when are_numbers(left, right) do
-      if right == 0.0, do: raise("[line #{line}] Error: Division by 0"), else: left / right
+      if right != 0.0 do
+        left / right
+      else
+        Loex.error(line, "Division by 0")
+      end
     end
 
     def do_evaluate("*", left, right, _) when are_numbers(left, right), do: left * right
@@ -44,12 +48,12 @@ defmodule Loex.Expr.Binary do
           Kernel.to_string(left) <> Kernel.to_string(right)
 
         true ->
-          raise("[line #{line}] Error: Both operands to `+' must be numbers or strings")
+          Loex.error(line, "Both operands to `+' must be numbers or strings")
       end
     end
 
     def do_evaluate(op, _, _, line) do
-      raise("[line #{line}] Error: Both operands to `#{op}' must be numbers")
+      Loex.error(line, "Both operands to `#{op}' must be numbers")
     end
   end
 end

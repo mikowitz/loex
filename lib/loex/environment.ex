@@ -13,7 +13,8 @@ defmodule Loex.Environment do
         Map.get(values, key)
 
       false ->
-        raise "Undefined variable: `#{key}'"
+        Loex.error(1, "Undefined variable: `#{key}'")
+        nil
     end
   end
 end

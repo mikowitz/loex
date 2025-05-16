@@ -58,6 +58,8 @@ defmodule Loex.CLI do
       Enum.reduce(parser.program, env, fn statement, env ->
         Statement.interpret(statement, env)
       end)
+    else
+      env
     end
   end
 end

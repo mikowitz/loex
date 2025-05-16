@@ -1,5 +1,6 @@
 defmodule Loex.Expr.BinaryTest do
   use ExUnit.Case, async: true
+  import ExUnit.CaptureIO
 
   alias Loex.Expr
   alias Loex.Expr.Binary
@@ -15,17 +16,23 @@ defmodule Loex.Expr.BinaryTest do
     test "subtracting a string" do
       expr = Binary.new(Literal.new(8.1), Token.new(:MINUS, "-", nil, 1), Literal.new("1.05"))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `-' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `-' must be numbers"
     end
 
     test "subtracting from a string" do
       expr = Binary.new(Literal.new("8.1"), Token.new(:MINUS, "-", nil, 1), Literal.new(1.05))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `-' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `-' must be numbers"
     end
 
     test "division" do
@@ -36,17 +43,23 @@ defmodule Loex.Expr.BinaryTest do
     test "division with invalid arguments" do
       expr = Binary.new(Literal.new("8.1"), Token.new(:SLASH, "/", nil, 1), Literal.new(1.05))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `/' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `/' must be numbers"
     end
 
     test "division by zero" do
       expr = Binary.new(Literal.new(0), Token.new(:SLASH, "/", nil, 1), Literal.new(0))
 
-      assert_raise RuntimeError, "[line 1] Error: Division by 0", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Division by 0"
     end
 
     test "multiplication" do
@@ -57,9 +70,12 @@ defmodule Loex.Expr.BinaryTest do
     test "multiplication with invalid arguments" do
       expr = Binary.new(Literal.new("8.1"), Token.new(:STAR, "*", nil, 1), Literal.new(1.05))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `*' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `*' must be numbers"
     end
 
     test "adding numbers" do
@@ -89,11 +105,12 @@ defmodule Loex.Expr.BinaryTest do
     test "invalid addition arguments" do
       expr = Binary.new(Literal.new(true), Token.new(:PLUS, "+", nil, 1), Literal.new(nil))
 
-      assert_raise RuntimeError,
-                   "[line 1] Error: Both operands to `+' must be numbers or strings",
-                   fn ->
-                     Expr.evaluate(expr)
-                   end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `+' must be numbers or strings"
     end
 
     test "comparing numbers" do
@@ -123,29 +140,41 @@ defmodule Loex.Expr.BinaryTest do
     test "invalid comparison operands" do
       expr = Binary.new(Literal.new(true), Token.new(:GREATER, ">", nil, 1), Literal.new(1.05))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `>' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `>' must be numbers"
 
       expr = Binary.new(Literal.new(8.1), Token.new(:LESS, "<", nil, 1), Literal.new(false))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `<' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `<' must be numbers"
 
       expr =
         Binary.new(Literal.new("foo"), Token.new(:GREATER_EQUAL, ">=", nil, 1), Literal.new(1.05))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `>=' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `>=' must be numbers"
 
       expr =
         Binary.new(Literal.new(8.1), Token.new(:LESS_EQUAL, "<=", nil, 1), Literal.new("bar"))
 
-      assert_raise RuntimeError, "[line 1] Error: Both operands to `<=' must be numbers", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "[line 1] Error: Both operands to `<=' must be numbers"
     end
   end
 end

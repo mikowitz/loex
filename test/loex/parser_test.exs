@@ -35,7 +35,7 @@ defmodule Loex.ParserTest do
             Parser.new(tokens) |> Parser.parse()
           end)
 
-        assert error =~ "[line 1] RuntimeError: Expect `;' after value"
+        assert error =~ "[line 1] Error: Expect `;' after value"
         assert error =~ "[line 1] Error: Expect `)' after expression."
       end
     end
@@ -50,7 +50,7 @@ defmodule Loex.ParserTest do
             Parser.new(tokens) |> Parser.parse()
           end)
 
-        assert error =~ "[line 1] RuntimeError: Expect `;' after value"
+        assert error =~ "[line 1] Error: Expect `;' after value"
         assert error =~ "[line 1] Error: Unexpected EOF"
       end
     end
@@ -148,7 +148,7 @@ defmodule Loex.ParserTest do
               Token.new(:EOF, "", nil, 1)
             ]
 
-        decl_str = "(var= #{id.lexeme} ;)"
+        decl_str = "(var= #{id.lexeme} nil ;)"
 
         %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
         assert Statement.to_string(ast) == decl_str

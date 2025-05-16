@@ -19,17 +19,13 @@ defmodule Loex.Parser do
     %{parser | program: Enum.reverse(program)}
   end
 
-  def parse(%__MODULE__{program: program, input: [t | _rest]} = parser) do
+  def parse(%__MODULE__{program: program} = parser) do
     {ast, parser} = declaration(parser)
-    %__MODULE__{parser | program: [ast | program]} |> parse()
-  rescue
-    e in RuntimeError ->
-      IO.puts(
-        :stderr,
-        IO.ANSI.format([:red, "[line #{t.line}] RuntimeError: #{e.message}"])
-      )
 
-      parser |> synchronize() |> parse()
+    case ast do
+      nil -> parser |> synchronize() |> parse()
+      _ -> %__MODULE__{parser | program: [ast | program]} |> parse()
+    end
   end
 
   def declaration(%{input: [%Token{type: :VAR} | rest]} = parser) do
@@ -50,17 +46,21 @@ defmodule Loex.Parser do
             {Statement.VariableDeclaration.new(token.lexeme, expr), %{parser | input: rest}}
 
           _ ->
-            raise "Expect `;' after value"
+            Loex.error(token.line, "Expect `;' after value")
+            {nil, parser |> synchronize()}
         end
 
       [%Token{type: :IDENTIFIER} = token, %Token{type: :SEMICOLON} | rest] ->
-        {Statement.VariableDeclaration.new(token.lexeme, nil), %{parser | input: rest}}
+        {Statement.VariableDeclaration.new(token.lexeme, Literal.new(nil)),
+         %{parser | input: rest}}
 
-      [%Token{type: :IDENTIFIER} | _] ->
-        raise("Expected `;' or expression after variable declaration")
+      [%Token{type: :IDENTIFIER} = token | _] ->
+        Loex.error(token.line, "Expect `;' or expression after variable declaration")
+        {nil, parser |> synchronize()}
 
       _ ->
-        raise("Expected variable name after `var'")
+        Loex.error(1, "Expect variable name after `var'")
+        {nil, parser |> synchronize()}
     end
   end
 
@@ -83,7 +83,8 @@ defmodule Loex.Parser do
         }
 
       _ ->
-        raise "Expect `;' after value"
+        Loex.error(1, "Expect `;' after value")
+        {nil, parser}
     end
   end
 
@@ -98,7 +99,8 @@ defmodule Loex.Parser do
         }
 
       _ ->
-        raise "Expect `;' after value"
+        Loex.error(1, "Expect `;' after value")
+        {nil, parser}
     end
   end
 
@@ -272,6 +274,9 @@ defmodule Loex.Parser do
 
   defp synchronize(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
+      [] ->
+        parser
+
       :EOF ->
         parse(parser)
 

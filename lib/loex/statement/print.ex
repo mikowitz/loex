@@ -17,7 +17,7 @@ defmodule Loex.Statement.Print do
 
       if is_nil(value), do: IO.puts("nil"), else: IO.puts(Kernel.to_string(value))
 
-      nil
+      env
     end
   end
 end

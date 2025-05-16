@@ -1,5 +1,6 @@
 defmodule Loex.Expr.UnaryTest do
   use ExUnit.Case, async: true
+  import ExUnit.CaptureIO
 
   alias Loex.Expr
   alias Loex.Expr.Literal
@@ -14,17 +15,23 @@ defmodule Loex.Expr.UnaryTest do
     test "negating a boolean" do
       expr = Unary.new("-", Literal.new(true))
 
-      assert_raise RuntimeError, "Operand to `-' must be a number", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "Operand to `-' must be a number"
     end
 
     test "negating a string" do
       expr = Unary.new("-", Literal.new("whatever"))
 
-      assert_raise RuntimeError, "Operand to `-' must be a number", fn ->
-        Expr.evaluate(expr)
-      end
+      output =
+        capture_io(:stderr, fn ->
+          Expr.evaluate(expr)
+        end)
+
+      assert output =~ "Operand to `-' must be a number"
     end
 
     test "not true" do
