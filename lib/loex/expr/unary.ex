@@ -21,6 +21,7 @@ defmodule Loex.Expr.Unary do
     def evaluate(%@for{operator: "-", expr: expr}) do
       case @protocol.evaluate(expr) do
         n when is_number(n) -> -n
+        _ -> raise("Operand to `-' must be a number")
       end
     end
   end

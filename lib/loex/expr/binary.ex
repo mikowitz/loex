@@ -19,15 +19,17 @@ defmodule Loex.Expr.Binary do
       do_evaluate(op, left, right)
     end
 
+    defguardp are_numbers(a, b) when is_number(a) and is_number(b)
+
     def do_evaluate("==", left, right), do: left == right
-    def do_evaluate("!=", left, right), do: left != right
-    def do_evaluate(">", left, right), do: left > right
-    def do_evaluate(">=", left, right), do: left >= right
-    def do_evaluate("<", left, right), do: left < right
-    def do_evaluate("<=", left, right), do: left <= right
-    def do_evaluate("-", left, right), do: left - right
-    def do_evaluate("/", left, right), do: left / right
-    def do_evaluate("*", left, right), do: left * right
+    def do_evaluate("!=", left, right) when are_numbers(left, right), do: left != right
+    def do_evaluate(">", left, right) when are_numbers(left, right), do: left > right
+    def do_evaluate(">=", left, right) when are_numbers(left, right), do: left >= right
+    def do_evaluate("<", left, right) when are_numbers(left, right), do: left < right
+    def do_evaluate("<=", left, right) when are_numbers(left, right), do: left <= right
+    def do_evaluate("-", left, right) when are_numbers(left, right), do: left - right
+    def do_evaluate("/", left, right) when are_numbers(left, right), do: left / right
+    def do_evaluate("*", left, right) when are_numbers(left, right), do: left * right
 
     def do_evaluate("+", left, right) do
       cond do
@@ -38,8 +40,12 @@ defmodule Loex.Expr.Binary do
           left <> right
 
         true ->
-          Loex.error(100, "Both operands to `+' must be numbers or strings")
+          raise("Both operands to `+' must be numbers or strings")
       end
+    end
+
+    def do_evaluate(op, _, _) do
+      raise("Both operands to `#{op}' must be numbers")
     end
   end
 end

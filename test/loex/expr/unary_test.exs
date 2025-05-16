@@ -11,6 +11,22 @@ defmodule Loex.Expr.UnaryTest do
       assert Expr.evaluate(expr) == -3.5
     end
 
+    test "negating a boolean" do
+      expr = Unary.new("-", Literal.new(true))
+
+      assert_raise RuntimeError, "Operand to `-' must be a number", fn ->
+        Expr.evaluate(expr)
+      end
+    end
+
+    test "negating a string" do
+      expr = Unary.new("-", Literal.new("whatever"))
+
+      assert_raise RuntimeError, "Operand to `-' must be a number", fn ->
+        Expr.evaluate(expr)
+      end
+    end
+
     test "not true" do
       expr = Unary.new("!", Literal.new(true))
       assert Expr.evaluate(expr) == false
