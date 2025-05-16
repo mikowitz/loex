@@ -10,8 +10,6 @@ defmodule Loex.Statement.PrintTest do
   alias Loex.Statement.Print
   alias Loex.Token
 
-  import Loex.Test.Support.ExpressionGenerators
-
   describe "interpret" do
     property "a print statement" do
       check all a <- float(min: 0.5, max: 999.5),

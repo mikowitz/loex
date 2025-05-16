@@ -4,7 +4,6 @@ defmodule Loex.Expr.BinaryTest do
   alias Loex.Expr
   alias Loex.Expr.Binary
   alias Loex.Expr.Literal
-  alias Loex.Expr.Unary
   alias Loex.Token
 
   describe "evaluate" do
