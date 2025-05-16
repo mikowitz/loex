@@ -4,7 +4,7 @@ defmodule Loex.Parser do
   """
 
   alias Loex.Statement
-  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary}
+  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
   alias Loex.Token
 
   defstruct [:input, program: [], has_errors: false]
@@ -19,9 +19,49 @@ defmodule Loex.Parser do
     %{parser | program: Enum.reverse(program)}
   end
 
-  def parse(%__MODULE__{program: program} = parser) do
-    {ast, parser} = statement(parser)
+  def parse(%__MODULE__{program: program, input: [t | _rest]} = parser) do
+    {ast, parser} = declaration(parser)
     %__MODULE__{parser | program: [ast | program]} |> parse()
+  rescue
+    e in RuntimeError ->
+      IO.puts(
+        :stderr,
+        IO.ANSI.format([:red, "[line #{t.line}] RuntimeError: #{e.message}"])
+      )
+
+      parser |> synchronize() |> parse()
+  end
+
+  def declaration(%{input: [%Token{type: :VAR} | rest]} = parser) do
+    variable_declaration(%{parser | input: rest})
+  end
+
+  def declaration(parser) do
+    statement(parser)
+  end
+
+  def variable_declaration(%{input: tokens} = parser) do
+    case tokens do
+      [%Token{type: :IDENTIFIER} = token, %Token{type: :EQUAL} | rest] ->
+        {expr, parser} = expression(%{parser | input: rest})
+
+        case parser.input do
+          [%Token{type: :SEMICOLON} | rest] ->
+            {Statement.VariableDeclaration.new(token.lexeme, expr), %{parser | input: rest}}
+
+          _ ->
+            raise "Expect `;' after value"
+        end
+
+      [%Token{type: :IDENTIFIER} = token, %Token{type: :SEMICOLON} | rest] ->
+        {Statement.VariableDeclaration.new(token.lexeme, nil), %{parser | input: rest}}
+
+      [%Token{type: :IDENTIFIER} | _] ->
+        raise("Expected `;' or expression after variable declaration")
+
+      _ ->
+        raise("Expected variable name after `var'")
+    end
   end
 
   def statement(%{input: [%Token{type: :PRINT} | rest]} = parser) do
@@ -201,6 +241,9 @@ defmodule Loex.Parser do
 
   defp primary(%__MODULE__{input: [%Token{type: :NUMBER} = token | rest]} = parser),
     do: {Literal.new(token.literal), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :IDENTIFIER} = token | rest]} = parser),
+    do: {Variable.new(token.lexeme), %{parser | input: rest}}
 
   defp primary(%__MODULE__{input: [%Token{type: :LEFT_PAREN} = token | rest]} = parser) do
     {expr, %{input: input} = parser} = expression(%{parser | input: rest})

@@ -24,16 +24,19 @@ defmodule Loex.ParserTest do
 
     property "an unclosed group" do
       check all {tokens, _} <- expression() do
-        tokens = [Token.new(:LEFT_PAREN, "(", nil, 1) | tokens]
+        tokens =
+          [Token.new(:LEFT_PAREN, "(", nil, 1) | tokens] ++
+            [
+              Token.new(:EOF, "", nil, 1)
+            ]
 
-        assert_raise RuntimeError, "Expect `;' after value", fn ->
-          error =
-            capture_io(:stderr, fn ->
-              Parser.new(tokens) |> Parser.parse()
-            end)
+        error =
+          capture_io(:stderr, fn ->
+            Parser.new(tokens) |> Parser.parse()
+          end)
 
-          assert error =~ "[line 1] Error: Expect `)' after expression."
-        end
+        assert error =~ "[line 1] RuntimeError: Expect `;' after value"
+        assert error =~ "[line 1] Error: Expect `)' after expression."
       end
     end
 
@@ -42,14 +45,13 @@ defmodule Loex.ParserTest do
                 {op_token, _} <- term_operator() do
         tokens = tokens ++ [op_token, Token.new(:EOF, "", nil, 1)]
 
-        assert_raise RuntimeError, "Expect `;' after value", fn ->
-          error =
-            capture_io(:stderr, fn ->
-              Parser.new(tokens) |> Parser.parse()
-            end)
+        error =
+          capture_io(:stderr, fn ->
+            Parser.new(tokens) |> Parser.parse()
+          end)
 
-          assert error =~ "[line 1] Error: Unexpected EOF"
-        end
+        assert error =~ "[line 1] RuntimeError: Expect `;' after value"
+        assert error =~ "[line 1] Error: Unexpected EOF"
       end
     end
 
@@ -109,6 +111,47 @@ defmodule Loex.ParserTest do
         p_str = "(print " <> ast_str <> " ;)"
         %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
         assert Statement.to_string(ast) == p_str
+      end
+    end
+
+    property "variable declaration" do
+      check all {id, id_str} <- identifier(),
+                {expr, expr_str} <- expression() do
+        tokens =
+          [
+            Token.new(:VAR, "var", nil, 1),
+            id,
+            Token.new(:EQUAL, "=", nil, 1)
+            | expr
+          ] ++
+            [
+              Token.new(:SEMICOLON, ";", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
+
+        decl_str = "(var= #{id.lexeme} #{expr_str} ;)"
+
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Statement.to_string(ast) == decl_str
+      end
+    end
+
+    property "variable declaration without an expression" do
+      check all {id, id_str} <- identifier() do
+        tokens =
+          [
+            Token.new(:VAR, "var", nil, 1),
+            id
+          ] ++
+            [
+              Token.new(:SEMICOLON, ";", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
+
+        decl_str = "(var= #{id.lexeme} ;)"
+
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Statement.to_string(ast) == decl_str
       end
     end
   end
