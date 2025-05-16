@@ -6,18 +6,24 @@ defmodule Loex.Parser do
   alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary}
   alias Loex.Token
 
-  defstruct [:input, :ast, has_errors: false]
+  defstruct [:input, program: [], has_errors: false]
 
   def new(input), do: %__MODULE__{input: input}
 
-  def parse(%__MODULE__{input: [%Token{type: :EOF}]} = parser) do
-    parser
+  def parse(%__MODULE__{input: [%Token{type: :EOF}], program: program} = parser) do
+    %{parser | program: Enum.reverse(program)}
   end
 
-  def parse(%__MODULE__{} = parser) do
-    {ast, parser} = expression(parser)
-    %__MODULE__{parser | ast: ast}
+  def parse(%__MODULE__{input: [], program: program} = parser) do
+    %{parser | program: Enum.reverse(program)}
   end
+
+  def parse(%__MODULE__{program: program} = parser) do
+    {ast, parser} = statement(parser)
+    %__MODULE__{parser | program: [ast | program]} |> parse()
+  end
+
+  def statement(parser), do: expression(parser)
 
   def expression(%__MODULE__{} = parser), do: comma_series(parser)
 
@@ -71,7 +77,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:EQUAL_EQUAL, :BANG_EQUAL] ->
         {right, parser} = comparison(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         equality_loop(expr, parser)
 
       _ ->
@@ -89,7 +95,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:GREATER, :LESS, :GREATER_EQUAL, :LESS_EQUAL] ->
         {right, parser} = term(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         comparison_loop(expr, parser)
 
       _ ->
@@ -107,7 +113,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:PLUS, :MINUS] ->
         {right, parser} = factor(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         term_loop(expr, parser)
 
       _ ->
@@ -125,7 +131,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:SLASH, :STAR] ->
         {right, parser} = unary(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         factor_loop(expr, parser)
 
       _ ->
@@ -186,6 +192,9 @@ defmodule Loex.Parser do
 
   defp synchronize(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
+      :EOF ->
+        parse(parser)
+
       :SEMICOLON ->
         %{parser | input: rest}
 

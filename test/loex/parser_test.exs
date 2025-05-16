@@ -10,8 +10,8 @@ defmodule Loex.ParserTest do
   describe "parse/1" do
     property "a valid expression" do
       check all {tokens, ast_str} <- expression() do
-        parser = Parser.new(tokens) |> Parser.parse()
-        assert Expr.to_string(parser.ast) == ast_str
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Expr.to_string(ast) == ast_str
       end
     end
 
@@ -21,8 +21,7 @@ defmodule Loex.ParserTest do
 
         error =
           capture_io(:stderr, fn ->
-            parser = Parser.new(tokens) |> Parser.parse()
-            assert parser.ast == nil
+            Parser.new(tokens) |> Parser.parse()
           end)
 
         assert error =~ "[line 1] Error: Expect `)' after expression."
@@ -54,8 +53,8 @@ defmodule Loex.ParserTest do
 
         ast_str = a_str <> " , " <> b_str <> " , " <> c_str
 
-        parser = Parser.new(tokens) |> Parser.parse()
-        assert Expr.to_string(parser.ast) == ast_str
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Expr.to_string(ast) == ast_str
       end
     end
 
@@ -70,8 +69,8 @@ defmodule Loex.ParserTest do
 
         ast_str = a_str <> " ? " <> b_str <> " : " <> c_str
 
-        parser = Parser.new(tokens) |> Parser.parse()
-        assert Expr.to_string(parser.ast) == ast_str
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Expr.to_string(ast) == ast_str
       end
     end
   end
