@@ -5,7 +5,6 @@ defmodule Loex.ExprTest do
   use ExUnitProperties
 
   alias Loex.Expr
-  alias Loex.Expr.Literal
 
   describe "evaluating" do
     property "a literal expression" do
