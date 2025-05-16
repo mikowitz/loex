@@ -41,6 +41,14 @@ defmodule Loex.Expr.BinaryTest do
       end
     end
 
+    test "division by zero" do
+      expr = Binary.new(Literal.new(0), "/", Literal.new(0))
+
+      assert_raise RuntimeError, "Division by 0", fn ->
+        Expr.evaluate(expr)
+      end
+    end
+
     test "multiplication" do
       expr = Binary.new(Literal.new(8.1), "*", Literal.new(1.05))
       assert Expr.evaluate(expr) == 8.505
@@ -62,6 +70,16 @@ defmodule Loex.Expr.BinaryTest do
     test "adding strings" do
       expr = Binary.new(Literal.new("hello, "), "+", Literal.new("world!"))
       assert Expr.evaluate(expr) == "hello, world!"
+    end
+
+    test "adding anything to a string" do
+      expr = Binary.new(Literal.new("hello, "), "+", Literal.new(3.14159))
+      assert Expr.evaluate(expr) == "hello, 3.14159"
+    end
+
+    test "adding a string to anything" do
+      expr = Binary.new(Literal.new(true), "+", Literal.new(", world!"))
+      assert Expr.evaluate(expr) == "true, world!"
     end
 
     test "invalid addition arguments" do
