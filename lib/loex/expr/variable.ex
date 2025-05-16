@@ -6,8 +6,11 @@ defmodule Loex.Expr.Variable do
   def new(name), do: %__MODULE__{name: name}
 
   defimpl Loex.Expr do
+    alias Loex.Environment
     def to_string(%@for{name: name}), do: "(variable \"#{name}\")"
 
-    def evaluate(%@for{name: _name}), do: nil
+    def evaluate(%@for{name: name}, env) do
+      Environment.get(env, name)
+    end
   end
 end

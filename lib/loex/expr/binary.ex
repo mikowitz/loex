@@ -12,9 +12,9 @@ defmodule Loex.Expr.Binary do
       "(#{op.lexeme} #{@protocol.to_string(l)} #{@protocol.to_string(r)})"
     end
 
-    def evaluate(%{left: left, operator: op, right: right}) do
-      left = @protocol.evaluate(left)
-      right = @protocol.evaluate(right)
+    def evaluate(%{left: left, operator: op, right: right}, env) do
+      left = @protocol.evaluate(left, env)
+      right = @protocol.evaluate(right, env)
 
       do_evaluate(op.lexeme, left, right, op.line)
     end

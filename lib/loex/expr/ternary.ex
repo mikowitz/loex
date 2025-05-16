@@ -19,10 +19,10 @@ defmodule Loex.Expr.Ternary do
       |> Enum.join(" ")
     end
 
-    def evaluate(%@for{condition: condition, left: left, right: right}) do
-      c = @protocol.evaluate(condition)
+    def evaluate(%@for{condition: condition, left: left, right: right}, env) do
+      c = @protocol.evaluate(condition, env)
 
-      if c, do: @protocol.evaluate(left), else: @protocol.evaluate(right)
+      if c, do: @protocol.evaluate(left, env), else: @protocol.evaluate(right, env)
     end
   end
 end

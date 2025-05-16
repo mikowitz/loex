@@ -1,5 +1,5 @@
 defprotocol Loex.Statement do
   def to_string(expr)
 
-  def interpret(statement)
+  def interpret(statement, env \\ %{})
 end

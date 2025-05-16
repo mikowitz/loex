@@ -115,7 +115,7 @@ defmodule Loex.ParserTest do
     end
 
     property "variable declaration" do
-      check all {id, id_str} <- identifier(),
+      check all {id, _id_str} <- identifier(),
                 {expr, expr_str} <- expression() do
         tokens =
           [
@@ -137,7 +137,7 @@ defmodule Loex.ParserTest do
     end
 
     property "variable declaration without an expression" do
-      check all {id, id_str} <- identifier() do
+      check all {id, _id_str} <- identifier() do
         tokens =
           [
             Token.new(:VAR, "var", nil, 1),

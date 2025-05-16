@@ -8,6 +8,7 @@ defmodule Loex.Statement.VariableDeclaration do
   end
 
   defimpl Loex.Statement do
+    alias Loex.Environment
     alias Loex.Expr
 
     def to_string(%@for{name: name, expr: nil}) do
@@ -18,6 +19,9 @@ defmodule Loex.Statement.VariableDeclaration do
       "(var= #{name} #{Expr.to_string(expr)} ;)"
     end
 
-    def interpret(%@for{}), do: nil
+    def interpret(%@for{name: name, expr: expr}, env) do
+      value = Expr.evaluate(expr)
+      Environment.put(env, name, value)
+    end
   end
 end

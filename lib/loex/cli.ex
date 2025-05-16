@@ -19,7 +19,7 @@ defmodule Loex.CLI do
     end
   end
 
-  defp run_repl do
+  defp run_repl(env \\ %{}) do
     IO.write("> ")
 
     case IO.read(:line) do
@@ -31,8 +31,8 @@ defmodule Loex.CLI do
         System.stop(65)
 
       data ->
-        data |> String.trim() |> run()
-        run_repl()
+        env = data |> String.trim() |> run(env)
+        run_repl(env)
     end
   end
 
@@ -47,7 +47,7 @@ defmodule Loex.CLI do
     end
   end
 
-  defp run(contents) do
+  defp run(contents, env \\ %{}) do
     scanner = Scanner.new(contents)
     scanner = Scanner.scan(scanner)
 
@@ -55,9 +55,9 @@ defmodule Loex.CLI do
     parser = Parser.parse(parser)
 
     if !parser.has_errors && !Enum.empty?(parser.program) do
-      for statement <- parser.program do
-        Statement.interpret(statement)
-      end
+      Enum.reduce(parser.program, env, fn statement, env ->
+        Statement.interpret(statement, env)
+      end)
     end
   end
 end

@@ -9,6 +9,6 @@ defmodule Loex.Expr.Literal do
     def to_string(%@for{value: nil}), do: "nil"
     def to_string(%@for{value: value}), do: String.Chars.to_string(value)
 
-    def evaluate(%@for{value: value}), do: value
+    def evaluate(%@for{value: value}, _env), do: value
   end
 end

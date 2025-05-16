@@ -10,16 +10,16 @@ defmodule Loex.Expr.Unary do
       "(#{operator} #{@protocol.to_string(expr)})"
     end
 
-    def evaluate(%@for{operator: "!", expr: expr}) do
-      case @protocol.evaluate(expr) do
+    def evaluate(%@for{operator: "!", expr: expr}, env) do
+      case @protocol.evaluate(expr, env) do
         false -> true
         nil -> true
         _ -> false
       end
     end
 
-    def evaluate(%@for{operator: "-", expr: expr}) do
-      case @protocol.evaluate(expr) do
+    def evaluate(%@for{operator: "-", expr: expr}, env) do
+      case @protocol.evaluate(expr, env) do
         n when is_number(n) -> -n
         _ -> raise("Operand to `-' must be a number")
       end

@@ -10,9 +10,9 @@ defmodule Loex.Expr.CommaSeries do
       "#{@protocol.to_string(left)} , #{@protocol.to_string(right)}"
     end
 
-    def evaluate(%@for{left: left, right: right}) do
-      @protocol.evaluate(left)
-      @protocol.evaluate(right)
+    def evaluate(%@for{left: left, right: right}, env) do
+      @protocol.evaluate(left, env)
+      @protocol.evaluate(right, env)
     end
   end
 end

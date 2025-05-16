@@ -12,8 +12,8 @@ defmodule Loex.Statement.Print do
       "(print #{Expr.to_string(expr)} ;)"
     end
 
-    def interpret(%@for{expr: expr}) do
-      value = Expr.evaluate(expr)
+    def interpret(%@for{expr: expr}, env) do
+      value = Expr.evaluate(expr, env)
 
       if is_nil(value), do: IO.puts("nil"), else: IO.puts(Kernel.to_string(value))
 

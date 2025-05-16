@@ -12,7 +12,7 @@ defmodule Loex.Statement.Expression do
       "(statement #{Expr.to_string(expr)} ;)"
     end
 
-    def interpret(%@for{}) do
+    def interpret(%@for{}, _env) do
       nil
     end
   end
