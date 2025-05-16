@@ -56,7 +56,8 @@ defmodule Loex.CLI do
     parser = Parser.parse(parser)
 
     if !parser.has_errors && !is_nil(parser.ast) do
-      IO.puts(Expr.to_string(parser.ast))
+      value = Expr.evaluate(parser.ast)
+      if is_nil(value), do: IO.puts("nil"), else: IO.puts(to_string(value))
     end
   end
 end

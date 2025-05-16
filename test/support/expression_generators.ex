@@ -3,6 +3,7 @@ defmodule Loex.Test.Support.ExpressionGenerators do
 
   use ExUnitProperties
 
+  alias Loex.Expr.{Grouping, Literal, Unary}
   alias Loex.Token
 
   def expression do
@@ -148,5 +149,28 @@ defmodule Loex.Test.Support.ExpressionGenerators do
       constant({Token.new(:EQUAL_EQUAL, "==", nil, 1), "=="}),
       constant({Token.new(:BANG_EQUAL, "!=", nil, 1), "!="})
     ])
+  end
+
+  def literal do
+    one_of([
+      constant(true),
+      constant(false),
+      constant(nil),
+      float(min: 0.5, max: 999.5),
+      integer(0..999)
+    ])
+    |> map(&Literal.new/1)
+  end
+
+  def grouping do
+    literal()
+    |> map(&Grouping.new/1)
+  end
+
+  def unary do
+    gen all op <- one_of([constant("-"), constant("!")]),
+            expr <- one_of([literal(), grouping()]) do
+      Unary.new(op, expr)
+    end
   end
 end

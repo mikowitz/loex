@@ -8,5 +8,7 @@ defmodule Loex.Expr.Literal do
   defimpl Loex.Expr do
     def to_string(%@for{value: nil}), do: "nil"
     def to_string(%@for{value: value}), do: String.Chars.to_string(value)
+
+    def evaluate(%@for{value: value}), do: value
   end
 end

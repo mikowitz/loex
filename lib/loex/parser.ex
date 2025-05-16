@@ -178,7 +178,7 @@ defmodule Loex.Parser do
   end
 
   defp primary(%__MODULE__{input: [token | _]} = parser) do
-    Loex.error(token.line, "Unexpected character `#{token.lexeme}'")
+    Loex.error(token.line, "Unexpected token `#{token.lexeme}'")
     {nil, parser |> with_errors() |> synchronize |> parse()}
   end
 
