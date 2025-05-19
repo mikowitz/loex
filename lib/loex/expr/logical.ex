@@ -1,4 +1,6 @@
 defmodule Loex.Expr.Logical do
+  @moduledoc false
+
   defstruct [:left, :operator, :right]
 
   def new(left, operator, right) do
@@ -13,20 +15,10 @@ defmodule Loex.Expr.Logical do
     def evaluate(%{left: l, operator: op, right: r}, env) do
       {left, env} = @protocol.evaluate(l, env)
 
-      case op.type do
-        :OR ->
-          if left do
-            {left, env}
-          else
-            @protocol.evaluate(r, env)
-          end
-
-        :AND ->
-          if !left do
-            {left, env}
-          else
-            @protocol.evaluate(r, env)
-          end
+      case {op.type, !!left} do
+        {:OR, true} -> {left, env}
+        {:AND, false} -> {left, env}
+        _ -> @protocol.evaluate(r, env)
       end
     end
   end

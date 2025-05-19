@@ -101,14 +101,7 @@ defmodule Loex.Parser do
           [%Token{type: :RIGHT_PAREN} | rest] ->
             {then_branch, parser} = statement(%{parser | input: rest})
 
-            case parser.input do
-              [%Token{type: :ELSE} | rest] ->
-                {else_branch, parser} = statement(%{parser | input: rest})
-                {Statement.If.new(condition, then_branch, else_branch), parser}
-
-              _ ->
-                {Statement.If.new(condition, then_branch, nil), parser}
-            end
+            check_for_else(parser, condition, then_branch)
 
           [t | _] ->
             Loex.error(t.line, "Expect `)' after if condition")
@@ -118,6 +111,17 @@ defmodule Loex.Parser do
       [t | _] ->
         Loex.error(t.line, "Expect `(' after `if'")
         {nil, parser |> synchronize()}
+    end
+  end
+
+  defp check_for_else(parser, condition, then_branch) do
+    case parser.input do
+      [%Token{type: :ELSE} | rest] ->
+        {else_branch, parser} = statement(%{parser | input: rest})
+        {Statement.If.new(condition, then_branch, else_branch), parser}
+
+      _ ->
+        {Statement.If.new(condition, then_branch, nil), parser}
     end
   end
 
