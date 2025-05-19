@@ -3,7 +3,18 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
-  alias Loex.Expr.{Assign, Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
+  alias Loex.Expr.{
+    Assign,
+    Binary,
+    CommaSeries,
+    Grouping,
+    Literal,
+    Logical,
+    Ternary,
+    Unary,
+    Variable
+  }
+
   alias Loex.Statement
   alias Loex.Statement.Block
   alias Loex.Token
@@ -165,7 +176,7 @@ defmodule Loex.Parser do
   def expression(%__MODULE__{} = parser), do: assignment(parser)
 
   def assignment(%__MODULE__{} = parser) do
-    {expr, parser} = comma_series(parser)
+    {expr, parser} = or_expr(parser)
 
     case parser.input do
       [%Token{type: :EQUAL, line: line} | rest] ->
@@ -179,6 +190,43 @@ defmodule Loex.Parser do
             Loex.error(line, "Invalid assignment target")
             {nil, parser |> synchronize()}
         end
+
+      _ ->
+        {expr, parser}
+    end
+  end
+
+  def or_expr(parser) do
+    {expr, parser} = and_expr(parser)
+    or_expr_loop(parser, expr)
+  end
+
+  defp or_expr_loop(parser, expr) do
+    case parser.input do
+      [%Token{type: :OR} = token | rest] ->
+        {right, parser} = and_expr(%{parser | input: rest})
+
+        expr = Logical.new(expr, token, right)
+        or_expr_loop(parser, expr)
+
+      _ ->
+        {expr, parser}
+    end
+  end
+
+  def and_expr(parser) do
+    {expr, parser} = comma_series(parser)
+
+    and_expr_loop(parser, expr)
+  end
+
+  defp and_expr_loop(parser, expr) do
+    case parser.input do
+      [%Token{type: :AND} = token | rest] ->
+        {right, parser} = comma_series(%{parser | input: rest})
+
+        expr = Logical.new(expr, token, right)
+        and_expr_loop(parser, expr)
 
       _ ->
         {expr, parser}
