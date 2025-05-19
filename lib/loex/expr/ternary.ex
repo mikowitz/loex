@@ -20,7 +20,7 @@ defmodule Loex.Expr.Ternary do
     end
 
     def evaluate(%@for{condition: condition, left: left, right: right}, env) do
-      c = @protocol.evaluate(condition, env)
+      {c, env} = @protocol.evaluate(condition, env)
 
       if c, do: @protocol.evaluate(left, env), else: @protocol.evaluate(right, env)
     end

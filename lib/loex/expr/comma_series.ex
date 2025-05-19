@@ -11,7 +11,7 @@ defmodule Loex.Expr.CommaSeries do
     end
 
     def evaluate(%@for{left: left, right: right}, env) do
-      @protocol.evaluate(left, env)
+      {_, env} = @protocol.evaluate(left, env)
       @protocol.evaluate(right, env)
     end
   end

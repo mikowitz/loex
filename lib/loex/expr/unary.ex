@@ -12,20 +12,19 @@ defmodule Loex.Expr.Unary do
 
     def evaluate(%@for{operator: "!", expr: expr}, env) do
       case @protocol.evaluate(expr, env) do
-        false -> true
-        nil -> true
-        _ -> false
+        {b, env} when b in [false, nil] -> {true, env}
+        {_, env} -> {false, env}
       end
     end
 
     def evaluate(%@for{operator: "-", expr: expr}, env) do
       case @protocol.evaluate(expr, env) do
-        n when is_number(n) ->
-          -n
+        {n, env} when is_number(n) ->
+          {-n, env}
 
-        _ ->
+        {_, env} ->
           Loex.error(1, "Operand to `-' must be a number")
-          nil
+          {nil, env}
       end
     end
   end

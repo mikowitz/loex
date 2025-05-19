@@ -4,7 +4,7 @@ defmodule Loex.Parser do
   """
 
   alias Loex.Statement
-  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
+  alias Loex.Expr.{Assign, Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
   alias Loex.Token
 
   defstruct [:input, program: [], has_errors: false]
@@ -104,7 +104,28 @@ defmodule Loex.Parser do
     end
   end
 
-  def expression(%__MODULE__{} = parser), do: comma_series(parser)
+  def expression(%__MODULE__{} = parser), do: assignment(parser)
+
+  def assignment(%__MODULE__{} = parser) do
+    {expr, parser} = comma_series(parser)
+
+    case parser.input do
+      [%Token{type: :EQUAL} | rest] ->
+        {value, parser} = assignment(%{parser | input: rest})
+
+        case expr do
+          %Variable{} ->
+            {Assign.new(expr, value), parser}
+
+          _ ->
+            Loex.error(1, "Invalid assignment target")
+            {nil, parser |> synchronize()}
+        end
+
+      _ ->
+        {expr, parser}
+    end
+  end
 
   def comma_series(%__MODULE__{} = parser) do
     {expr, parser} = ternary(parser)

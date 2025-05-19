@@ -9,7 +9,8 @@ defmodule Loex.Expr.UnaryTest do
   describe "evaluate" do
     test "negating a number" do
       expr = Unary.new("-", Literal.new(3.5))
-      assert Expr.evaluate(expr) == -3.5
+      {value, _env} = Expr.evaluate(expr)
+      assert value == -3.5
     end
 
     test "negating a boolean" do
@@ -36,27 +37,32 @@ defmodule Loex.Expr.UnaryTest do
 
     test "not true" do
       expr = Unary.new("!", Literal.new(true))
-      assert Expr.evaluate(expr) == false
+      {value, _env} = Expr.evaluate(expr)
+      assert value == false
     end
 
     test "not false" do
       expr = Unary.new("!", Literal.new(false))
-      assert Expr.evaluate(expr) == true
+      {value, _env} = Expr.evaluate(expr)
+      assert value == true
     end
 
     test "not nil" do
       expr = Unary.new("!", Literal.new(nil))
-      assert Expr.evaluate(expr) == true
+      {value, _env} = Expr.evaluate(expr)
+      assert value == true
     end
 
     test "not a number" do
       expr = Unary.new("!", Literal.new(3.5))
-      assert Expr.evaluate(expr) == false
+      {value, _env} = Expr.evaluate(expr)
+      assert value == false
     end
 
     test "not a string" do
       expr = Unary.new("!", Literal.new("ok"))
-      assert Expr.evaluate(expr) == false
+      {value, _env} = Expr.evaluate(expr)
+      assert value == false
     end
   end
 end

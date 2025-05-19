@@ -13,10 +13,10 @@ defmodule Loex.Expr.Binary do
     end
 
     def evaluate(%{left: left, operator: op, right: right}, env) do
-      left = @protocol.evaluate(left, env)
-      right = @protocol.evaluate(right, env)
+      {left, env} = @protocol.evaluate(left, env)
+      {right, env} = @protocol.evaluate(right, env)
 
-      do_evaluate(op.lexeme, left, right, op.line)
+      {do_evaluate(op.lexeme, left, right, op.line), env}
     end
 
     defguardp are_numbers(a, b) when is_number(a) and is_number(b)

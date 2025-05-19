@@ -154,5 +154,26 @@ defmodule Loex.ParserTest do
         assert Statement.to_string(ast) == decl_str
       end
     end
+
+    property "variable assignment" do
+      check all {id, id_str} <- identifier(),
+                {expr, expr_str} <- expression() do
+        tokens =
+          [
+            id,
+            Token.new(:EQUAL, "=", nil, 1)
+            | expr
+          ] ++
+            [
+              Token.new(:SEMICOLON, ";", nil, 1),
+              Token.new(:EOF, "", nil, 1)
+            ]
+
+        decl_str = "(statement (var= #{id_str} #{expr_str} ;) ;)"
+
+        %Parser{program: [ast]} = Parser.new(tokens) |> Parser.parse()
+        assert Statement.to_string(ast) == decl_str
+      end
+    end
   end
 end

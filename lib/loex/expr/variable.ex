@@ -10,7 +10,7 @@ defmodule Loex.Expr.Variable do
     def to_string(%@for{name: name}), do: "(variable \"#{name}\")"
 
     def evaluate(%@for{name: name}, env) do
-      Environment.get(env, name)
+      {Environment.get(env, name), env}
     end
   end
 end

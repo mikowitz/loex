@@ -13,11 +13,11 @@ defmodule Loex.Statement.Print do
     end
 
     def interpret(%@for{expr: expr}, env) do
-      value = Expr.evaluate(expr, env)
+      {value, env} = Expr.evaluate(expr, env)
 
       if is_nil(value), do: IO.puts("nil"), else: IO.puts(Kernel.to_string(value))
 
-      env
+      {nil, env}
     end
   end
 end

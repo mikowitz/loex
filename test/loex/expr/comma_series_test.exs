@@ -9,7 +9,8 @@ defmodule Loex.Expr.CommaSeriesTest do
     test "evaluates to the right-most expression" do
       expr = CommaSeries.new(Literal.new(3), Literal.new("5"))
 
-      assert Expr.evaluate(expr) == "5"
+      {value, _env} = Expr.evaluate(expr)
+      assert value == "5"
     end
 
     test "evaluates to the right-most expression in the deepest nesting" do
@@ -19,7 +20,8 @@ defmodule Loex.Expr.CommaSeriesTest do
           CommaSeries.new(Literal.new("5"), Literal.new(17.5))
         )
 
-      assert Expr.evaluate(expr) == 17.5
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 17.5
     end
   end
 end

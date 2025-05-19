@@ -14,7 +14,8 @@ defmodule Loex.Expr.TernaryTest do
           Literal.new(0)
         )
 
-      assert Expr.evaluate(expr) == 1
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 1
     end
 
     test "when the condition is false" do
@@ -25,7 +26,8 @@ defmodule Loex.Expr.TernaryTest do
           Literal.new(0)
         )
 
-      assert Expr.evaluate(expr) == 0
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 0
     end
   end
 end

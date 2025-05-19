@@ -10,7 +10,8 @@ defmodule Loex.Expr.BinaryTest do
   describe "evaluate" do
     test "subtraction" do
       expr = Binary.new(Literal.new(8.1), Token.new(:MINUS, "-", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == 7.05
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 7.05
     end
 
     test "subtracting a string" do
@@ -37,7 +38,8 @@ defmodule Loex.Expr.BinaryTest do
 
     test "division" do
       expr = Binary.new(Literal.new(8.1), Token.new(:SLASH, "/", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == 7.7142857142857135
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 7.7142857142857135
     end
 
     test "division with invalid arguments" do
@@ -64,7 +66,8 @@ defmodule Loex.Expr.BinaryTest do
 
     test "multiplication" do
       expr = Binary.new(Literal.new(8.1), Token.new(:STAR, "*", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == 8.505
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 8.505
     end
 
     test "multiplication with invalid arguments" do
@@ -80,26 +83,30 @@ defmodule Loex.Expr.BinaryTest do
 
     test "adding numbers" do
       expr = Binary.new(Literal.new(8.1), Token.new(:PLUS, "+", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == 9.15
+      {value, _env} = Expr.evaluate(expr)
+      assert value == 9.15
     end
 
     test "adding strings" do
       expr =
         Binary.new(Literal.new("hello, "), Token.new(:PLUS, "+", nil, 1), Literal.new("world!"))
 
-      assert Expr.evaluate(expr) == "hello, world!"
+      {value, _env} = Expr.evaluate(expr)
+      assert value == "hello, world!"
     end
 
     test "adding anything to a string" do
       expr =
         Binary.new(Literal.new("hello, "), Token.new(:PLUS, "+", nil, 1), Literal.new(3.14159))
 
-      assert Expr.evaluate(expr) == "hello, 3.14159"
+      {value, _env} = Expr.evaluate(expr)
+      assert value == "hello, 3.14159"
     end
 
     test "adding a string to anything" do
       expr = Binary.new(Literal.new(true), Token.new(:PLUS, "+", nil, 1), Literal.new(", world!"))
-      assert Expr.evaluate(expr) == "true, world!"
+      {value, _env} = Expr.evaluate(expr)
+      assert value == "true, world!"
     end
 
     test "invalid addition arguments" do
@@ -115,26 +122,33 @@ defmodule Loex.Expr.BinaryTest do
 
     test "comparing numbers" do
       expr = Binary.new(Literal.new(8.1), Token.new(:GREATER, ">", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == true
+      {value, _env} = Expr.evaluate(expr)
+      assert value == true
 
       expr = Binary.new(Literal.new(8.1), Token.new(:LESS, "<", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == false
+      {value, _env} = Expr.evaluate(expr)
+      assert value == false
 
       expr =
         Binary.new(Literal.new(8.1), Token.new(:GREATER_EQUAL, ">=", nil, 1), Literal.new(1.05))
 
-      assert Expr.evaluate(expr) == true
+      {value, _env} = Expr.evaluate(expr)
+      assert value == true
 
       expr = Binary.new(Literal.new(8.1), Token.new(:LESS_EQUAL, "<=", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == false
+      {value, _env} = Expr.evaluate(expr)
+      assert value == false
 
       expr = Binary.new(Literal.new(8.1), Token.new(:BANG_EQUAL, "!=", nil, 1), Literal.new(1.05))
-      assert Expr.evaluate(expr) == true
+      {value, _env} = Expr.evaluate(expr)
+      assert value == true
 
       expr =
         Binary.new(Literal.new(8.1), Token.new(:EQUAL_EQUAL, "==", nil, 1), Literal.new(1.05))
 
-      assert Expr.evaluate(expr) == false
+      {value, _env} = Expr.evaluate(expr)
+
+      assert value == false
     end
 
     test "invalid comparison operands" do
