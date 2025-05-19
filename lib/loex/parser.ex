@@ -3,23 +3,154 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
-  alias Loex.Expr.{Binary, CommaSeries, Grouping, Literal, Ternary, Unary}
+  alias Loex.Expr.{Assign, Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
+  alias Loex.Statement
+  alias Loex.Statement.Block
   alias Loex.Token
 
-  defstruct [:input, :ast, has_errors: false]
+  defstruct [:input, program: [], has_errors: false]
 
   def new(input), do: %__MODULE__{input: input}
 
-  def parse(%__MODULE__{input: [%Token{type: :EOF}]} = parser) do
-    parser
+  def parse(%__MODULE__{input: [%Token{type: :EOF}], program: program} = parser) do
+    %{parser | program: Enum.reverse(program)}
   end
 
-  def parse(%__MODULE__{} = parser) do
-    {ast, parser} = expression(parser)
-    %__MODULE__{parser | ast: ast}
+  def parse(%__MODULE__{input: [], program: program} = parser) do
+    %{parser | program: Enum.reverse(program)}
   end
 
-  def expression(%__MODULE__{} = parser), do: comma_series(parser)
+  def parse(%__MODULE__{program: program} = parser) do
+    {ast, parser} = declaration(parser)
+
+    case ast do
+      nil -> parser |> synchronize() |> parse()
+      _ -> %__MODULE__{parser | program: [ast | program]} |> parse()
+    end
+  end
+
+  def declaration(%{input: [%Token{type: :VAR} | rest]} = parser) do
+    variable_declaration(%{parser | input: rest})
+  end
+
+  def declaration(parser) do
+    statement(parser)
+  end
+
+  def variable_declaration(%{input: tokens} = parser) do
+    case tokens do
+      [%Token{type: :IDENTIFIER} = token, %Token{type: :EQUAL} | rest] ->
+        {expr, parser} = expression(%{parser | input: rest})
+
+        case parser.input do
+          [%Token{type: :SEMICOLON} | rest] ->
+            {Statement.VariableDeclaration.new(token.lexeme, expr), %{parser | input: rest}}
+
+          _ ->
+            Loex.error(token.line, "Expect `;' after value")
+            {nil, parser |> synchronize()}
+        end
+
+      [%Token{type: :IDENTIFIER} = token, %Token{type: :SEMICOLON} | rest] ->
+        {Statement.VariableDeclaration.new(token.lexeme, Literal.new(nil)),
+         %{parser | input: rest}}
+
+      [%Token{type: :IDENTIFIER} = token | _] ->
+        Loex.error(token.line, "Expect `;' or expression after variable declaration")
+        {nil, parser |> synchronize()}
+
+      [t | _] ->
+        Loex.error(t.line, "Expect variable name after `var'")
+        {nil, parser |> synchronize()}
+    end
+  end
+
+  def statement(%{input: [%Token{type: :PRINT} | rest]} = parser) do
+    print_statement(%{parser | input: rest})
+  end
+
+  def statement(%{input: [%Token{type: :LEFT_BRACE} | rest]} = parser) do
+    block_statement(%{parser | input: rest})
+  end
+
+  def statement(parser) do
+    expression_statement(parser)
+  end
+
+  defp print_statement(parser) do
+    {expr, parser} = expression(parser)
+
+    case parser.input do
+      [%Token{type: :SEMICOLON} | rest] ->
+        {
+          Statement.Print.new(expr),
+          %{parser | input: rest}
+        }
+
+      [t | _] ->
+        Loex.error(t.line, "Expect `;' after value")
+        {nil, parser}
+    end
+  end
+
+  defp block_statement(parser) do
+    {stmt, parser} = declaration(parser)
+
+    block_loop(parser, [stmt])
+  end
+
+  defp block_loop(parser, acc) do
+    case parser.input do
+      [%Token{type: :RIGHT_BRACE} | rest] ->
+        {
+          Block.new(Enum.reverse(acc)),
+          %{parser | input: rest}
+        }
+
+      _ ->
+        {stmt, parser} = declaration(parser)
+        block_loop(parser, [stmt | acc])
+    end
+  end
+
+  def expression_statement(parser) do
+    {expr, parser} = expression(parser)
+
+    case parser.input do
+      [%Token{type: :SEMICOLON} | rest] ->
+        {
+          Statement.Expression.new(expr),
+          %{parser | input: rest}
+        }
+
+      [t | _] ->
+        Loex.error(t.line, "Expect `;' after value")
+        {nil, parser}
+    end
+  end
+
+  def expression(%__MODULE__{} = parser), do: assignment(parser)
+
+  def assignment(%__MODULE__{} = parser) do
+    {expr, parser} = comma_series(parser)
+
+    case parser.input do
+      [%Token{type: :EQUAL, line: line} | rest] ->
+        {value, parser} = assignment(%{parser | input: rest})
+
+        case expr do
+          %Variable{} ->
+            {Assign.new(expr, value), parser}
+
+          _ ->
+            Loex.error(line, "Invalid assignment target")
+            {nil, parser |> synchronize()}
+        end
+
+      _ ->
+        {expr, parser}
+    end
+  end
 
   def comma_series(%__MODULE__{} = parser) do
     {expr, parser} = ternary(parser)
@@ -51,8 +182,8 @@ defmodule Loex.Parser do
             {right, parser} = ternary(%__MODULE__{input: rest})
             {Ternary.new(condition, left, right), parser}
 
-          _ ->
-            Loex.error(1, "Expected `:' in ternary expression")
+          [t | _rest] ->
+            Loex.error(t.line, "Expected `:' in ternary expression")
             {nil, parser |> with_errors() |> synchronize()}
         end
 
@@ -71,7 +202,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:EQUAL_EQUAL, :BANG_EQUAL] ->
         {right, parser} = comparison(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         equality_loop(expr, parser)
 
       _ ->
@@ -89,7 +220,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:GREATER, :LESS, :GREATER_EQUAL, :LESS_EQUAL] ->
         {right, parser} = term(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         comparison_loop(expr, parser)
 
       _ ->
@@ -107,7 +238,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:PLUS, :MINUS] ->
         {right, parser} = factor(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         term_loop(expr, parser)
 
       _ ->
@@ -125,7 +256,7 @@ defmodule Loex.Parser do
     case parser.input do
       [%Token{type: t} = token | rest] when t in [:SLASH, :STAR] ->
         {right, parser} = unary(%{parser | input: rest})
-        expr = Binary.new(expr, token.lexeme, right)
+        expr = Binary.new(expr, token, right)
         factor_loop(expr, parser)
 
       _ ->
@@ -137,7 +268,7 @@ defmodule Loex.Parser do
     case token.type do
       t when t in [:BANG, :MINUS] ->
         {expr, parser} = unary(%{parser | input: rest})
-        {Unary.new(token.lexeme, expr), parser}
+        {Unary.new(token, expr), parser}
 
       _ ->
         primary(parser)
@@ -158,6 +289,9 @@ defmodule Loex.Parser do
 
   defp primary(%__MODULE__{input: [%Token{type: :NUMBER} = token | rest]} = parser),
     do: {Literal.new(token.literal), %{parser | input: rest}}
+
+  defp primary(%__MODULE__{input: [%Token{type: :IDENTIFIER} = token | rest]} = parser),
+    do: {Variable.new(token.lexeme, token.line), %{parser | input: rest}}
 
   defp primary(%__MODULE__{input: [%Token{type: :LEFT_PAREN} = token | rest]} = parser) do
     {expr, %{input: input} = parser} = expression(%{parser | input: rest})
@@ -186,6 +320,12 @@ defmodule Loex.Parser do
 
   defp synchronize(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
+      [] ->
+        parser
+
+      :EOF ->
+        parse(parser)
+
       :SEMICOLON ->
         %{parser | input: rest}
 

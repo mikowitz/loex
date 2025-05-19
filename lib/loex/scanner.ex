@@ -3,6 +3,7 @@ defmodule Loex.Scanner do
   Handles scanning Lox source code and converting it into a list of tokens.
   """
   alias Loex.Token
+
   defstruct [:input, tokens: [], current_line: 1, has_errors: false]
 
   defguardp is_alpha(a) when a in ?a..?z or a in ?A..?Z or a == ?_

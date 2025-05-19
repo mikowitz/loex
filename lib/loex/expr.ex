@@ -1,5 +1,5 @@
 defprotocol Loex.Expr do
   def to_string(expr)
 
-  def evaluate(expr)
+  def evaluate(expr, env \\ %{})
 end

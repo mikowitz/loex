@@ -4,8 +4,7 @@ defmodule Loex.ScannerTest do
 
   use ExUnitProperties
 
-  import Loex.Test.Support.Generators
-  import Loex.Test.Support.TestHelpers
+  import Loex.Test.Support.{Generators, TestHelpers}
 
   alias Loex.Scanner
   alias Loex.Token

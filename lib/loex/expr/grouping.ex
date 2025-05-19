@@ -10,8 +10,8 @@ defmodule Loex.Expr.Grouping do
       "(group #{@protocol.to_string(expr)})"
     end
 
-    def evaluate(%@for{expr: expr}) do
-      @protocol.evaluate(expr)
+    def evaluate(%@for{expr: expr}, env) do
+      @protocol.evaluate(expr, env)
     end
   end
 end

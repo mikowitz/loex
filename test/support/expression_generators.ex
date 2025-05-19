@@ -18,6 +18,11 @@ defmodule Loex.Test.Support.ExpressionGenerators do
     ])
   end
 
+  def identifier do
+    string([?a..?z, ?A..?Z, ?_], min_length: 3)
+    |> map(fn s -> {Token.new(:IDENTIFIER, s, nil, 1), "(variable \"#{s}\")"} end)
+  end
+
   def primary_expr do
     one_of([
       constant({Token.new(:TRUE, "true", nil, 1), "true"}),
@@ -28,7 +33,8 @@ defmodule Loex.Test.Support.ExpressionGenerators do
         integer(0..999)
       ])
       |> map(fn n -> {Token.new(:NUMBER, to_string(n), n * 1.0, 1), to_string(n * 1.0)} end),
-      string(:ascii) |> map(fn s -> {Token.new(:STRING, s, s, 1), s} end)
+      string(:ascii) |> map(fn s -> {Token.new(:STRING, s, s, 1), s} end),
+      identifier()
     ])
     |> list_of(min_length: 1, max_length: 1)
   end
