@@ -1,16 +1,16 @@
 defmodule Loex.Expr.Variable do
   @moduledoc false
 
-  defstruct [:name]
+  defstruct [:name, :line]
 
-  def new(name), do: %__MODULE__{name: name}
+  def new(name, line), do: %__MODULE__{name: name, line: line}
 
   defimpl Loex.Expr do
     alias Loex.Environment
     def to_string(%@for{name: name}), do: "(variable \"#{name}\")"
 
-    def evaluate(%@for{name: name}, env) do
-      {Environment.get(env, name), env}
+    def evaluate(%@for{name: name, line: line}, env) do
+      {Environment.get(env, name, line), env}
     end
   end
 end

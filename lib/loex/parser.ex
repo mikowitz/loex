@@ -59,8 +59,8 @@ defmodule Loex.Parser do
         Loex.error(token.line, "Expect `;' or expression after variable declaration")
         {nil, parser |> synchronize()}
 
-      _ ->
-        Loex.error(1, "Expect variable name after `var'")
+      [t | _] ->
+        Loex.error(t.line, "Expect variable name after `var'")
         {nil, parser |> synchronize()}
     end
   end
@@ -87,8 +87,8 @@ defmodule Loex.Parser do
           %{parser | input: rest}
         }
 
-      _ ->
-        Loex.error(1, "Expect `;' after value")
+      [t | _] ->
+        Loex.error(t.line, "Expect `;' after value")
         {nil, parser}
     end
   end
@@ -123,8 +123,8 @@ defmodule Loex.Parser do
           %{parser | input: rest}
         }
 
-      _ ->
-        Loex.error(1, "Expect `;' after value")
+      [t | _] ->
+        Loex.error(t.line, "Expect `;' after value")
         {nil, parser}
     end
   end
@@ -135,7 +135,7 @@ defmodule Loex.Parser do
     {expr, parser} = comma_series(parser)
 
     case parser.input do
-      [%Token{type: :EQUAL} | rest] ->
+      [%Token{type: :EQUAL, line: line} | rest] ->
         {value, parser} = assignment(%{parser | input: rest})
 
         case expr do
@@ -143,7 +143,7 @@ defmodule Loex.Parser do
             {Assign.new(expr, value), parser}
 
           _ ->
-            Loex.error(1, "Invalid assignment target")
+            Loex.error(line, "Invalid assignment target")
             {nil, parser |> synchronize()}
         end
 
@@ -182,8 +182,8 @@ defmodule Loex.Parser do
             {right, parser} = ternary(%__MODULE__{input: rest})
             {Ternary.new(condition, left, right), parser}
 
-          _ ->
-            Loex.error(1, "Expected `:' in ternary expression")
+          [t | _rest] ->
+            Loex.error(t.line, "Expected `:' in ternary expression")
             {nil, parser |> with_errors() |> synchronize()}
         end
 
@@ -268,7 +268,7 @@ defmodule Loex.Parser do
     case token.type do
       t when t in [:BANG, :MINUS] ->
         {expr, parser} = unary(%{parser | input: rest})
-        {Unary.new(token.lexeme, expr), parser}
+        {Unary.new(token, expr), parser}
 
       _ ->
         primary(parser)
@@ -291,7 +291,7 @@ defmodule Loex.Parser do
     do: {Literal.new(token.literal), %{parser | input: rest}}
 
   defp primary(%__MODULE__{input: [%Token{type: :IDENTIFIER} = token | rest]} = parser),
-    do: {Variable.new(token.lexeme), %{parser | input: rest}}
+    do: {Variable.new(token.lexeme, token.line), %{parser | input: rest}}
 
   defp primary(%__MODULE__{input: [%Token{type: :LEFT_PAREN} = token | rest]} = parser) do
     {expr, %{input: input} = parser} = expression(%{parser | input: rest})
