@@ -3,8 +3,7 @@ defmodule Loex.Expr.BinaryTest do
   import ExUnit.CaptureIO
 
   alias Loex.Expr
-  alias Loex.Expr.Binary
-  alias Loex.Expr.Literal
+  alias Loex.Expr.{Binary, Literal}
   alias Loex.Token
 
   describe "evaluate" do

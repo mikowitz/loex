@@ -4,8 +4,7 @@ defmodule Loex.Statement.PrintTest do
 
   use ExUnitProperties
 
-  alias Loex.Expr.Binary
-  alias Loex.Expr.Literal
+  alias Loex.Expr.{Binary, Literal}
   alias Loex.Statement
   alias Loex.Statement.Print
   alias Loex.Token

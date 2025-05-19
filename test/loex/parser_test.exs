@@ -2,8 +2,9 @@ defmodule Loex.ParserTest do
   use ExUnit.Case, async: true
   import ExUnit.CaptureIO
 
-  import Loex.Test.Support.ExpressionGenerators
   use ExUnitProperties
+
+  import Loex.Test.Support.ExpressionGenerators
 
   alias Loex.{Parser, Statement, Token}
 

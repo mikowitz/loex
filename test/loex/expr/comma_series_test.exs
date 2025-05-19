@@ -2,8 +2,7 @@ defmodule Loex.Expr.CommaSeriesTest do
   use ExUnit.Case, async: true
 
   alias Loex.Expr
-  alias Loex.Expr.CommaSeries
-  alias Loex.Expr.Literal
+  alias Loex.Expr.{CommaSeries, Literal}
 
   describe "evaluate" do
     test "evaluates to the right-most expression" do

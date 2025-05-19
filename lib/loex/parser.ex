@@ -3,9 +3,9 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
+  alias Loex.Expr.{Assign, Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
   alias Loex.Statement
   alias Loex.Statement.Block
-  alias Loex.Expr.{Assign, Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
   alias Loex.Token
 
   defstruct [:input, program: [], has_errors: false]

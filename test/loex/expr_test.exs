@@ -1,8 +1,9 @@
 defmodule Loex.ExprTest do
   use ExUnit.Case, async: true
 
-  import Loex.Test.Support.ExpressionGenerators
   use ExUnitProperties
+
+  import Loex.Test.Support.ExpressionGenerators
 
   alias Loex.Expr
 

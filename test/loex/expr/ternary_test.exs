@@ -2,8 +2,7 @@ defmodule Loex.Expr.TernaryTest do
   use ExUnit.Case, async: true
 
   alias Loex.Expr
-  alias Loex.Expr.Literal
-  alias Loex.Expr.Ternary
+  alias Loex.Expr.{Literal, Ternary}
 
   describe "evaluate" do
     test "when the condition is true" do
