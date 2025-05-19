@@ -13,8 +13,7 @@ defmodule Loex.Statement.Expression do
     end
 
     def interpret(%@for{expr: expr}, env) do
-      value = Expr.evaluate(expr)
-      {value, env}
+      Expr.evaluate(expr, env)
     end
   end
 end

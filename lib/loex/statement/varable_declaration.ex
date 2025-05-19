@@ -20,7 +20,7 @@ defmodule Loex.Statement.VariableDeclaration do
     end
 
     def interpret(%@for{name: name, expr: expr}, env) do
-      value = Expr.evaluate(expr)
+      {value, env} = Expr.evaluate(expr, env)
       {value, Environment.put(env, name, value)}
     end
   end

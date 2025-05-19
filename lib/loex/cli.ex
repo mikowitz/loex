@@ -3,6 +3,7 @@ defmodule Loex.CLI do
   The primary entrypoint for interacting with the Loex interpreter.
   """
 
+  alias Loex.Environment
   alias Loex.{Parser, Scanner, Statement}
 
   def main(args) do
@@ -19,7 +20,7 @@ defmodule Loex.CLI do
     end
   end
 
-  defp run_repl(env \\ %{}) do
+  defp run_repl(env \\ %Environment{}) do
     IO.write("> ")
 
     case IO.read(:line) do
@@ -47,7 +48,7 @@ defmodule Loex.CLI do
     end
   end
 
-  defp run(contents, env \\ %{}) do
+  defp run(contents, env \\ %Environment{}) do
     scanner = Scanner.new(contents)
     scanner = Scanner.scan(scanner)
 
@@ -56,7 +57,8 @@ defmodule Loex.CLI do
 
     if !parser.has_errors && !Enum.empty?(parser.program) do
       Enum.reduce(parser.program, env, fn statement, env ->
-        Statement.interpret(statement, env)
+        {_value, env} = Statement.interpret(statement, env)
+        env
       end)
     else
       env

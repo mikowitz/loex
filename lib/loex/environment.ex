@@ -1,13 +1,15 @@
 defmodule Loex.Environment do
+  defstruct values: %{}, outer: nil
+
   @moduledoc """
   Models the environment state of a running Lox program
   """
 
-  def put(values, key, value) do
-    Map.put(values, key, value)
+  def put(%__MODULE__{values: values} = env, key, value) do
+    %__MODULE__{env | values: Map.put(values, key, value)}
   end
 
-  def get(values, key) do
+  def get(%__MODULE__{values: values}, key) do
     case key in Map.keys(values) do
       true ->
         Map.get(values, key)
