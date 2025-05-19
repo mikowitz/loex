@@ -9,12 +9,15 @@ defmodule Loex.Environment do
     %__MODULE__{env | values: Map.put(values, key, value)}
   end
 
-  def get(%__MODULE__{values: values}, key) do
-    case key in Map.keys(values) do
-      true ->
+  def get(%__MODULE__{values: values, outer: outer}, key) do
+    cond do
+      key in Map.keys(values) ->
         Map.get(values, key)
 
-      false ->
+      is_struct(outer, __MODULE__) ->
+        __MODULE__.get(outer, key)
+
+      true ->
         Loex.error(1, "Undefined variable: `#{key}'")
         nil
     end

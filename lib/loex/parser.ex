@@ -4,6 +4,7 @@ defmodule Loex.Parser do
   """
 
   alias Loex.Statement
+  alias Loex.Statement.Block
   alias Loex.Expr.{Assign, Binary, CommaSeries, Grouping, Literal, Ternary, Unary, Variable}
   alias Loex.Token
 
@@ -68,6 +69,10 @@ defmodule Loex.Parser do
     print_statement(%{parser | input: rest})
   end
 
+  def statement(%{input: [%Token{type: :LEFT_BRACE} | rest]} = parser) do
+    block_statement(%{parser | input: rest})
+  end
+
   def statement(parser) do
     expression_statement(parser)
   end
@@ -85,6 +90,26 @@ defmodule Loex.Parser do
       _ ->
         Loex.error(1, "Expect `;' after value")
         {nil, parser}
+    end
+  end
+
+  defp block_statement(parser) do
+    {stmt, parser} = declaration(parser)
+
+    block_loop(parser, [stmt])
+  end
+
+  defp block_loop(parser, acc) do
+    case parser.input do
+      [%Token{type: :RIGHT_BRACE} | rest] ->
+        {
+          Block.new(Enum.reverse(acc)),
+          %{parser | input: rest}
+        }
+
+      _ ->
+        {stmt, parser} = declaration(parser)
+        block_loop(parser, [stmt | acc])
     end
   end
 
