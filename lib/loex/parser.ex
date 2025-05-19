@@ -73,8 +73,41 @@ defmodule Loex.Parser do
     block_statement(%{parser | input: rest})
   end
 
+  def statement(%{input: [%Token{type: :IF} | rest]} = parser) do
+    if_statement(%{parser | input: rest})
+  end
+
   def statement(parser) do
     expression_statement(parser)
+  end
+
+  defp if_statement(parser) do
+    case parser.input do
+      [%Token{type: :LEFT_PAREN} | rest] ->
+        {condition, parser} = expression(%{parser | input: rest})
+
+        case parser.input do
+          [%Token{type: :RIGHT_PAREN} | rest] ->
+            {then_branch, parser} = statement(%{parser | input: rest})
+
+            case parser.input do
+              [%Token{type: :ELSE} | rest] ->
+                {else_branch, parser} = statement(%{parser | input: rest})
+                {Statement.If.new(condition, then_branch, else_branch), parser}
+
+              _ ->
+                {Statement.If.new(condition, then_branch, nil), parser}
+            end
+
+          [t | _] ->
+            Loex.error(t.line, "Expect `)' after if condition")
+            {nil, parser |> synchronize()}
+        end
+
+      [t | _] ->
+        Loex.error(t.line, "Expect `(' after `if'")
+        {nil, parser |> synchronize()}
+    end
   end
 
   defp print_statement(parser) do
