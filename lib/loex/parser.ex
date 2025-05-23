@@ -3,6 +3,8 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
+  alias Loex.Statement.While
+
   alias Loex.Expr.{
     Assign,
     Binary,
@@ -82,6 +84,27 @@ defmodule Loex.Parser do
 
   def statement(%{input: [%Token{type: :LEFT_BRACE} | rest]} = parser) do
     block_statement(%{parser | input: rest})
+  end
+
+  def statement(%{input: [%Token{type: :WHILE} | rest]} = parser) do
+    case rest do
+      [%Token{type: :LEFT_PAREN} | rest] ->
+        {condition, parser} = expression(%{parser | input: rest})
+
+        case parser.input do
+          [%Token{type: :RIGHT_PAREN} | rest] ->
+            {body, parser} = statement(%{parser | input: rest})
+            {While.new(condition, body), parser}
+
+          [t | _rest] ->
+            Loex.error(t.line, "Expect `)' after while condition")
+            {nil, parser |> synchronize()}
+        end
+
+      [t | _rest] ->
+        Loex.error(t.line, "Expect `(' after `while'.")
+        {nil, parser |> synchronize()}
+    end
   end
 
   def statement(%{input: [%Token{type: :IF} | rest]} = parser) do

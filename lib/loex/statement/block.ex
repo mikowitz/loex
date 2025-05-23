@@ -14,7 +14,7 @@ defmodule Loex.Statement.Block do
     end
 
     def interpret(%@for{statements: statements}, env) do
-      env = %Environment{env | outer: env}
+      env = %Environment{outer: env}
 
       env =
         Enum.reduce(statements, env, fn stmt, env ->

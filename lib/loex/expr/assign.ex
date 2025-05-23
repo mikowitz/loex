@@ -14,9 +14,9 @@ defmodule Loex.Expr.Assign do
       "(var= #{Expr.to_string(name)} #{Expr.to_string(value)} ;)"
     end
 
-    def evaluate(%@for{name: %Variable{name: name}, value: value}, env) do
+    def evaluate(%@for{name: %Variable{name: name, line: line}, value: value}, env) do
       {value, env} = Expr.evaluate(value, env)
-      env = Environment.put(env, name, value)
+      env = Environment.put(env, name, value, line)
       {value, env}
     end
   end

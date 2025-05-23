@@ -5,8 +5,23 @@ defmodule Loex.Environment do
   Models the environment state of a running Lox program
   """
 
-  def put(%__MODULE__{values: values} = env, key, value) do
-    %__MODULE__{env | values: Map.put(values, key, value)}
+  def define(%__MODULE__{values: values} = env, key, value) do
+    %__MODULE__{env | values: Map.put_new(values, key, value)}
+  end
+
+  def put(%__MODULE__{values: values, outer: outer} = env, key, value, line) do
+    cond do
+      key in Map.keys(values) ->
+        %__MODULE__{env | values: Map.put(values, key, value)}
+
+      is_struct(outer, __MODULE__) ->
+        outer = %{outer | values: Map.put(values, key, value)}
+        %{env | outer: outer}
+
+      true ->
+        Loex.error(line, "Undefined variable: `#{key}'")
+        nil
+    end
   end
 
   def get(%__MODULE__{values: values, outer: outer}, key, line) do
