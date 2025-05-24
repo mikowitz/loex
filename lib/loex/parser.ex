@@ -3,6 +3,9 @@ defmodule Loex.Parser do
   Handles parsing a list of Lox tokens into an AST.
   """
 
+  alias __MODULE__.DeclarationHelpers
+  alias __MODULE__.StatementHelpers
+
   alias Loex.Statement.While
 
   alias Loex.Expr.{
@@ -17,8 +20,6 @@ defmodule Loex.Parser do
     Variable
   }
 
-  alias Loex.Statement
-  alias Loex.Statement.Block
   alias Loex.Token
 
   defstruct [:input, program: [], has_errors: false]
@@ -43,47 +44,19 @@ defmodule Loex.Parser do
   end
 
   def declaration(%{input: [%Token{type: :VAR} | rest]} = parser) do
-    variable_declaration(%{parser | input: rest})
+    DeclarationHelpers.variable_declaration(%{parser | input: rest})
   end
 
   def declaration(parser) do
     statement(parser)
   end
 
-  def variable_declaration(%{input: tokens} = parser) do
-    case tokens do
-      [%Token{type: :IDENTIFIER} = token, %Token{type: :EQUAL} | rest] ->
-        {expr, parser} = expression(%{parser | input: rest})
-
-        case parser.input do
-          [%Token{type: :SEMICOLON} | rest] ->
-            {Statement.VariableDeclaration.new(token.lexeme, expr), %{parser | input: rest}}
-
-          _ ->
-            Loex.error(token.line, "Expect `;' after value")
-            {nil, parser |> synchronize()}
-        end
-
-      [%Token{type: :IDENTIFIER} = token, %Token{type: :SEMICOLON} | rest] ->
-        {Statement.VariableDeclaration.new(token.lexeme, Literal.new(nil)),
-         %{parser | input: rest}}
-
-      [%Token{type: :IDENTIFIER} = token | _] ->
-        Loex.error(token.line, "Expect `;' or expression after variable declaration")
-        {nil, parser |> synchronize()}
-
-      [t | _] ->
-        Loex.error(t.line, "Expect variable name after `var'")
-        {nil, parser |> synchronize()}
-    end
-  end
-
   def statement(%{input: [%Token{type: :PRINT} | rest]} = parser) do
-    print_statement(%{parser | input: rest})
+    StatementHelpers.print_statement(%{parser | input: rest})
   end
 
   def statement(%{input: [%Token{type: :LEFT_BRACE} | rest]} = parser) do
-    block_statement(%{parser | input: rest})
+    StatementHelpers.block_statement(%{parser | input: rest})
   end
 
   def statement(%{input: [%Token{type: :WHILE} | rest]} = parser) do
@@ -108,96 +81,11 @@ defmodule Loex.Parser do
   end
 
   def statement(%{input: [%Token{type: :IF} | rest]} = parser) do
-    if_statement(%{parser | input: rest})
+    StatementHelpers.if_statement(%{parser | input: rest})
   end
 
   def statement(parser) do
-    expression_statement(parser)
-  end
-
-  defp if_statement(parser) do
-    case parser.input do
-      [%Token{type: :LEFT_PAREN} | rest] ->
-        {condition, parser} = expression(%{parser | input: rest})
-
-        case parser.input do
-          [%Token{type: :RIGHT_PAREN} | rest] ->
-            {then_branch, parser} = statement(%{parser | input: rest})
-
-            check_for_else(parser, condition, then_branch)
-
-          [t | _] ->
-            Loex.error(t.line, "Expect `)' after if condition")
-            {nil, parser |> synchronize()}
-        end
-
-      [t | _] ->
-        Loex.error(t.line, "Expect `(' after `if'")
-        {nil, parser |> synchronize()}
-    end
-  end
-
-  defp check_for_else(parser, condition, then_branch) do
-    case parser.input do
-      [%Token{type: :ELSE} | rest] ->
-        {else_branch, parser} = statement(%{parser | input: rest})
-        {Statement.If.new(condition, then_branch, else_branch), parser}
-
-      _ ->
-        {Statement.If.new(condition, then_branch, nil), parser}
-    end
-  end
-
-  defp print_statement(parser) do
-    {expr, parser} = expression(parser)
-
-    case parser.input do
-      [%Token{type: :SEMICOLON} | rest] ->
-        {
-          Statement.Print.new(expr),
-          %{parser | input: rest}
-        }
-
-      [t | _] ->
-        Loex.error(t.line, "Expect `;' after value")
-        {nil, parser}
-    end
-  end
-
-  defp block_statement(parser) do
-    {stmt, parser} = declaration(parser)
-
-    block_loop(parser, [stmt])
-  end
-
-  defp block_loop(parser, acc) do
-    case parser.input do
-      [%Token{type: :RIGHT_BRACE} | rest] ->
-        {
-          Block.new(Enum.reverse(acc)),
-          %{parser | input: rest}
-        }
-
-      _ ->
-        {stmt, parser} = declaration(parser)
-        block_loop(parser, [stmt | acc])
-    end
-  end
-
-  def expression_statement(parser) do
-    {expr, parser} = expression(parser)
-
-    case parser.input do
-      [%Token{type: :SEMICOLON} | rest] ->
-        {
-          Statement.Expression.new(expr),
-          %{parser | input: rest}
-        }
-
-      [t | _] ->
-        Loex.error(t.line, "Expect `;' after value")
-        {nil, parser}
-    end
+    StatementHelpers.expression_statement(parser)
   end
 
   def expression(%__MODULE__{} = parser), do: assignment(parser)
@@ -424,9 +312,9 @@ defmodule Loex.Parser do
     {nil, parser |> with_errors() |> synchronize |> parse()}
   end
 
-  defp with_errors(%__MODULE__{} = parser), do: %{parser | has_errors: true}
+  def with_errors(%__MODULE__{} = parser), do: %{parser | has_errors: true}
 
-  defp synchronize(%__MODULE__{input: [token | rest]} = parser) do
+  def synchronize(%__MODULE__{input: [token | rest]} = parser) do
     case token.type do
       [] ->
         parser
