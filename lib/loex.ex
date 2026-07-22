@@ -1,18 +1,67 @@
 defmodule Loex do
   @moduledoc """
-  Documentation for `Loex`.
+  Main entrypoint into the Loex interpreter
   """
 
-  @doc """
-  Hello world.
+  defstruct had_error: false
 
-  ## Examples
+  def main(args) do
+    runtime = %__MODULE__{}
 
-      iex> Loex.hello()
-      :world
+    case args do
+      [filename] ->
+        run_file(filename, runtime)
 
-  """
-  def hello do
-    :world
+      [] ->
+        run_repl(runtime)
+
+      _ ->
+        IO.puts(:stderr, "Usage: mix lox [script]")
+        System.stop(64)
+    end
+  end
+
+  defp run_file(filename, runtime) do
+    {:ok, file} = File.read(filename)
+    runtime = run(file, runtime)
+    if runtime.had_error, do: System.stop(65)
+  end
+
+  defp run_repl(runtime) do
+    IO.write("> ")
+
+    case IO.read(:line) do
+      :EOF ->
+        System.stop(0)
+
+      line ->
+        runtime = String.trim(line) |> run(runtime)
+        runtime = %{runtime | had_error: false}
+        run_repl(runtime)
+    end
+  end
+
+  defp run(data, runtime) do
+    IO.puts(data)
+    runtime
+  end
+
+  def error(%__MODULE__{} = runtime, loc, message) do
+    report(runtime, loc, "", message)
+  end
+
+  defp report(%__MODULE__{} = runtime, loc, where, message) do
+    where =
+      case where do
+        "" -> ""
+        _ -> " #{where}"
+      end
+
+    IO.puts(
+      :stderr,
+      "[line #{loc}] Error#{where}: #{message}"
+    )
+
+    %{runtime | had_error: true}
   end
 end
