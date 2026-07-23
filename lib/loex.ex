@@ -5,6 +5,10 @@ defmodule Loex do
 
   defstruct had_error: false
 
+  @type t :: %__MODULE__{
+          had_error: boolean()
+        }
+
   def main(args) do
     runtime = %__MODULE__{}
 
@@ -41,9 +45,14 @@ defmodule Loex do
     end
   end
 
+  require Logger
+
   defp run(data, runtime) do
-    IO.puts(data)
-    runtime
+    scanner = Loex.Scanner.new(data, runtime)
+    scanner = Loex.Scanner.scan(scanner)
+
+    Enum.each(scanner.tokens, &Logger.debug(to_string(&1)))
+    scanner.runtime
   end
 
   def error(%__MODULE__{} = runtime, loc, message) do
