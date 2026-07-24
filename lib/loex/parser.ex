@@ -112,7 +112,7 @@ defmodule Loex.Parser do
     {expr, parser} = expression(%{parser | tokens: rest})
 
     case parser.tokens do
-      [%{type: RIGHT_PAREN} | rest] ->
+      [%{type: :RIGHT_PAREN} | rest] ->
         {Grouping.new(expr), %{parser | tokens: rest}}
 
       [t | _] ->

@@ -3,7 +3,7 @@ defmodule Loex do
   Main entrypoint into the Loex interpreter
   """
 
-  defstruct had_error: false
+  defstruct had_error: false, had_runtime_error: false
 
   @type t :: %__MODULE__{
           had_error: boolean()
@@ -11,13 +11,14 @@ defmodule Loex do
 
   def main(args) do
     runtime = %__MODULE__{}
+    interpreter = Loex.Interpreter.new(runtime)
 
     case args do
       [filename] ->
-        run_file(filename, runtime)
+        run_file(filename, interpreter)
 
       [] ->
-        run_repl(runtime)
+        run_repl(interpreter)
 
       _ ->
         IO.puts(:stderr, "Usage: mix lox [script]")
@@ -25,13 +26,14 @@ defmodule Loex do
     end
   end
 
-  defp run_file(filename, runtime) do
+  defp run_file(filename, interpreter) do
     {:ok, file} = File.read(filename)
-    runtime = run(file, runtime)
-    if runtime.had_error, do: System.stop(65)
+    interpreter = run(file, interpreter)
+    if interpreter.runtime.had_error, do: System.stop(65)
+    if interpreter.runtime.had_runtime_error, do: System.stop(64)
   end
 
-  defp run_repl(runtime) do
+  defp run_repl(interpreter) do
     IO.write("> ")
 
     case IO.read(:line) do
@@ -39,25 +41,27 @@ defmodule Loex do
         System.stop(0)
 
       line ->
-        runtime = String.trim(line) |> run(runtime)
-        runtime = %{runtime | had_error: false}
-        run_repl(runtime)
+        interpreter = String.trim(line) |> run(interpreter)
+        runtime = %{interpreter.runtime | had_error: false, had_runtime_error: false}
+        run_repl(%{interpreter | runtime: runtime})
     end
   end
 
-  defp run(data, runtime) do
-    scanner = Loex.Scanner.new(data, runtime)
+  defp run(data, interpreter) do
+    scanner = Loex.Scanner.new(data, interpreter.runtime)
     scanner = Loex.Scanner.scan(scanner)
 
     parser = Loex.Parser.new(scanner.tokens, scanner.runtime)
     {expr, parser} = Loex.Parser.parse(parser)
 
-    if !parser.runtime.had_error do
-      printer = %Loex.AstPrinter{}
-      IO.puts(Loex.AstPrinter.print(printer, expr))
-    end
+    case parser.runtime.had_error do
+      true ->
+        %{interpreter | runtime: parser.runtime}
 
-    parser.runtime
+      false ->
+        interpreter = %{interpreter | runtime: parser.runtime}
+        Loex.Interpreter.interpret(interpreter, expr)
+    end
   end
 
   def error(%__MODULE__{} = runtime, %Loex.Token{} = token, message) do
@@ -69,6 +73,15 @@ defmodule Loex do
 
   def error(%__MODULE__{} = runtime, loc, message) do
     report(runtime, loc, "", message)
+  end
+
+  def runtime_error(%__MODULE__{} = runtime, %Loex.Token{} = token, message) do
+    IO.puts(
+      :stderr,
+      "#{message}\n[line #{token.loc}]"
+    )
+
+    %{runtime | had_runtime_error: true}
   end
 
   defp report(%__MODULE__{} = runtime, loc, where, message) do
