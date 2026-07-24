@@ -2,10 +2,11 @@ defmodule Loex.Expr do
   @moduledoc false
 
   @exprs [
-    Binary: ~w(left operator right)a,
-    Grouping: ~w(expression)a,
-    Literal: ~w(value)a,
-    Unary: ~w(operator right)a
+    Binary: [:left, :operator, :right],
+    Grouping: [:expression],
+    Literal: [:value],
+    Unary: [:operator, :right],
+    Variable: [:name]
   ]
 
   for {name, fields} <- @exprs do

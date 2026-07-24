@@ -2,8 +2,9 @@ defmodule Loex.Stmt do
   @moduledoc false
 
   @stmts [
-    Expression: ~w(expression)a,
-    Print: ~w(expression)a
+    Expression: [:expression],
+    Print: [:expression],
+    Var: [:name, :initializer]
   ]
 
   for {name, fields} <- @stmts do

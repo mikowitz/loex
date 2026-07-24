@@ -3,14 +3,20 @@ defmodule Loex.Interpreter do
   Interprets a [Loex.Expr] to its value.
   """
 
-  defstruct [:runtime]
+  defstruct [:runtime, :environment]
 
-  alias Loex.Expr.{Binary, Grouping, Literal, Unary}
+  @type t :: %__MODULE__{
+          runtime: Loex.t(),
+          environment: Environment.t()
+        }
+
+  alias Loex.Environment
+  alias Loex.Expr.{Binary, Grouping, Literal, Unary, Variable}
   alias Loex.Interpreter.VisitBinary
-  alias Loex.Stmt.{Expression, Print}
+  alias Loex.Stmt.{Expression, Print, Var}
 
   def new(runtime \\ %Loex{}) do
-    %__MODULE__{runtime: runtime}
+    %__MODULE__{runtime: runtime, environment: %Environment{}}
   end
 
   def interpret(%__MODULE__{} = interpreter, statements) do
@@ -41,6 +47,18 @@ defmodule Loex.Interpreter do
     {nil, interpreter}
   end
 
+  def visit(%__MODULE__{} = interpreter, %Var{} = stmt) do
+    {value, interpreter} =
+      case stmt.initializer do
+        nil -> {nil, interpreter}
+        init -> evaluate(interpreter, init)
+      end
+
+    env = interpreter.environment
+    env = Environment.define(env, stmt.name.lexeme, value)
+    {nil, %{interpreter | environment: env}}
+  end
+
   def visit(%__MODULE__{} = interpreter, %Binary{} = expr) do
     {left, interpreter} = evaluate(interpreter, expr.left)
     {right, interpreter} = evaluate(interpreter, expr.right)
@@ -64,6 +82,13 @@ defmodule Loex.Interpreter do
       :MINUS when is_number(right) -> {-right, interpreter}
       :MINUS -> report_runtime_error(interpreter, expr.operator, "Operand must be a number.")
       _ -> nil
+    end
+  end
+
+  def visit(%__MODULE__{} = interpreter, %Variable{} = expr) do
+    case Environment.get(interpreter.environment, expr.name) do
+      {:ok, value} -> {value, interpreter}
+      {:error, message} -> report_runtime_error(interpreter, expr.name, message)
     end
   end
 
