@@ -1,16 +1,14 @@
-defmodule Loex.Expr do
+defmodule Loex.Stmt do
   @moduledoc false
 
-  @exprs [
-    Assign: [:name, :value],
-    Binary: [:left, :operator, :right],
-    Grouping: [:expression],
-    Literal: [:value],
-    Unary: [:operator, :right],
-    Variable: [:name]
+  @stmts [
+    Block: [:statements],
+    Expression: [:expression],
+    Print: [:expression],
+    Var: [:name, :initializer]
   ]
 
-  for {name, fields} <- @exprs do
+  for {name, fields} <- @stmts do
     params = Enum.map(fields, &{&1, [], Elixir})
 
     struct_fields = Enum.map(params, fn {name, _, _} = param -> {name, param} end)

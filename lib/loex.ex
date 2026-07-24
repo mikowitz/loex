@@ -52,7 +52,7 @@ defmodule Loex do
     scanner = Loex.Scanner.scan(scanner)
 
     parser = Loex.Parser.new(scanner.tokens, scanner.runtime)
-    {expr, parser} = Loex.Parser.parse(parser)
+    parser = Loex.Parser.parse(parser)
 
     case parser.runtime.had_error do
       true ->
@@ -60,7 +60,7 @@ defmodule Loex do
 
       false ->
         interpreter = %{interpreter | runtime: parser.runtime}
-        Loex.Interpreter.interpret(interpreter, expr)
+        Loex.Interpreter.interpret(interpreter, parser.statements)
     end
   end
 
