@@ -45,14 +45,26 @@ defmodule Loex do
     end
   end
 
-  require Logger
-
   defp run(data, runtime) do
     scanner = Loex.Scanner.new(data, runtime)
     scanner = Loex.Scanner.scan(scanner)
 
-    Enum.each(scanner.tokens, &Logger.debug(to_string(&1)))
-    scanner.runtime
+    parser = Loex.Parser.new(scanner.tokens, scanner.runtime)
+    {expr, parser} = Loex.Parser.parse(parser)
+
+    if !parser.runtime.had_error do
+      printer = %Loex.AstPrinter{}
+      IO.puts(Loex.AstPrinter.print(printer, expr))
+    end
+
+    parser.runtime
+  end
+
+  def error(%__MODULE__{} = runtime, %Loex.Token{} = token, message) do
+    case token.type do
+      :EOF -> report(runtime, token.loc, "at end", message)
+      _ -> report(runtime, token.loc, "at `#{token.lexeme}`", message)
+    end
   end
 
   def error(%__MODULE__{} = runtime, loc, message) do
