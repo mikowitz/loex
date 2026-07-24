@@ -3,15 +3,35 @@ defmodule Loex.Parser do
   Parses a series of [Loex.Tokens] into an AST expression.
   """
 
-  defstruct [:tokens, :runtime]
+  defstruct [:tokens, :runtime, statements: []]
 
   alias Loex.Expr.{Binary, Grouping, Literal, Unary}
+  alias Loex.Parser.Statements
 
   def new(tokens, runtime \\ %Loex{}) do
     %__MODULE__{tokens: tokens, runtime: runtime}
   end
 
-  def parse(%__MODULE__{} = parser), do: expression(parser)
+  def parse(%__MODULE__{tokens: []} = parser) do
+    %{parser | statements: Enum.reverse(parser.statements)}
+  end
+
+  def parse(%__MODULE__{tokens: [%{type: :EOF}]} = parser) do
+    %{parser | statements: Enum.reverse(parser.statements)}
+  end
+
+  def parse(%__MODULE__{} = parser) do
+    {stmt, parser} = statement(parser)
+    %{parser | statements: [stmt | parser.statements]}
+  end
+
+  def statement(%__MODULE__{tokens: [%{type: :PRINT} | rest]} = parser) do
+    Statements.print_statement(%{parser | tokens: rest})
+  end
+
+  def statement(%__MODULE__{} = parser) do
+    Statements.expression_statement(parser)
+  end
 
   def expression(%__MODULE__{} = parser), do: equality(parser)
 

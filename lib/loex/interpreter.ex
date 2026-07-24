@@ -7,15 +7,21 @@ defmodule Loex.Interpreter do
 
   alias Loex.Expr.{Binary, Grouping, Literal, Unary}
   alias Loex.Interpreter.VisitBinary
+  alias Loex.Stmt.{Expression, Print}
 
   def new(runtime \\ %Loex{}) do
     %__MODULE__{runtime: runtime}
   end
 
-  def interpret(%__MODULE__{} = interpreter, expr) do
-    {value, interpreter} = evaluate(interpreter, expr)
-    IO.puts(value)
-    interpreter
+  def interpret(%__MODULE__{} = interpreter, statements) do
+    Enum.reduce(statements, interpreter, fn stmt, interpreter ->
+      {_, interpreter} = execute(interpreter, stmt)
+      interpreter
+    end)
+  end
+
+  def execute(%__MODULE__{} = interpreter, stmt) do
+    stmt.__struct__.accept(stmt, interpreter)
   end
 
   def evaluate(%__MODULE__{} = interpreter, expr) do
@@ -23,6 +29,17 @@ defmodule Loex.Interpreter do
   end
 
   defguard are_numbers(a, b) when is_number(a) and is_number(b)
+
+  def visit(%__MODULE__{} = interpreter, %Expression{} = stmt) do
+    {_, interpreter} = evaluate(interpreter, stmt.expression)
+    {nil, interpreter}
+  end
+
+  def visit(%__MODULE__{} = interpreter, %Print{} = stmt) do
+    {value, interpreter} = evaluate(interpreter, stmt.expression)
+    IO.puts(value)
+    {nil, interpreter}
+  end
 
   def visit(%__MODULE__{} = interpreter, %Binary{} = expr) do
     {left, interpreter} = evaluate(interpreter, expr.left)
