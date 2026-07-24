@@ -5,7 +5,7 @@ defmodule Loex.Parser do
 
   defstruct [:tokens, :runtime, statements: []]
 
-  alias Loex.Expr.{Binary, Grouping, Literal, Unary, Variable}
+  alias Loex.Expr.{Assign, Binary, Grouping, Literal, Unary, Variable}
   alias Loex.Parser.Statements
   alias Loex.Stmt.Var
 
@@ -71,7 +71,28 @@ defmodule Loex.Parser do
     Statements.expression_statement(parser)
   end
 
-  def expression(%__MODULE__{} = parser), do: equality(parser)
+  def expression(%__MODULE__{} = parser), do: assignment(parser)
+
+  def assignment(%__MODULE__{} = parser) do
+    {expr, parser} = equality(parser)
+
+    case parser.tokens do
+      [%{type: :EQUAL} = t | rest] ->
+        {value, parser} = assignment(%{parser | tokens: rest})
+
+        case expr do
+          %Variable{name: name} ->
+            {Assign.new(name, value), parser}
+
+          _ ->
+            runtime = Loex.error(parser.runtime, t, "Invalid assignment target.")
+            {nil, %{parser | runtime: runtime}}
+        end
+
+      _ ->
+        {expr, parser}
+    end
+  end
 
   def equality(%__MODULE__{} = parser) do
     {expr, parser} = comparison(parser)

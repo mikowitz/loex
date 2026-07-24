@@ -11,7 +11,7 @@ defmodule Loex.Interpreter do
         }
 
   alias Loex.Environment
-  alias Loex.Expr.{Binary, Grouping, Literal, Unary, Variable}
+  alias Loex.Expr.{Assign, Binary, Grouping, Literal, Unary, Variable}
   alias Loex.Interpreter.VisitBinary
   alias Loex.Stmt.{Expression, Print, Var}
 
@@ -57,6 +57,15 @@ defmodule Loex.Interpreter do
     env = interpreter.environment
     env = Environment.define(env, stmt.name.lexeme, value)
     {nil, %{interpreter | environment: env}}
+  end
+
+  def visit(%__MODULE__{} = interpreter, %Assign{} = expr) do
+    {value, interpreter} = evaluate(interpreter, expr.value)
+
+    case Environment.assign(interpreter.environment, expr.name, value) do
+      {:ok, env} -> {value, %{interpreter | environment: env}}
+      {:error, message} -> report_runtime_error(interpreter, expr.name, message)
+    end
   end
 
   def visit(%__MODULE__{} = interpreter, %Binary{} = expr) do

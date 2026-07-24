@@ -2,6 +2,7 @@ defmodule Loex.Expr do
   @moduledoc false
 
   @exprs [
+    Assign: [:name, :value],
     Binary: [:left, :operator, :right],
     Grouping: [:expression],
     Literal: [:value],
