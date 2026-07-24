@@ -63,6 +63,10 @@ defmodule Loex.Parser do
     {nil, %{parser | runtime: runtime}}
   end
 
+  def statement(%__MODULE__{tokens: [%{type: :LEFT_BRACE} | rest]} = parser) do
+    Statements.block_statement(%{parser | tokens: rest})
+  end
+
   def statement(%__MODULE__{tokens: [%{type: :PRINT} | rest]} = parser) do
     Statements.print_statement(%{parser | tokens: rest})
   end

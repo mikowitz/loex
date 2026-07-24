@@ -13,7 +13,7 @@ defmodule Loex.Interpreter do
   alias Loex.Environment
   alias Loex.Expr.{Assign, Binary, Grouping, Literal, Unary, Variable}
   alias Loex.Interpreter.VisitBinary
-  alias Loex.Stmt.{Expression, Print, Var}
+  alias Loex.Stmt.{Block, Expression, Print, Var}
 
   def new(runtime \\ %Loex{}) do
     %__MODULE__{runtime: runtime, environment: %Environment{}}
@@ -35,6 +35,10 @@ defmodule Loex.Interpreter do
   end
 
   defguard are_numbers(a, b) when is_number(a) and is_number(b)
+
+  def visit(%__MODULE__{} = interpreter, %Block{} = stmt) do
+    execute_block(interpreter, stmt.statements, Environment.new(interpreter.environment))
+  end
 
   def visit(%__MODULE__{} = interpreter, %Expression{} = stmt) do
     {_, interpreter} = evaluate(interpreter, stmt.expression)
@@ -90,7 +94,7 @@ defmodule Loex.Interpreter do
       :BANG -> {!right, interpreter}
       :MINUS when is_number(right) -> {-right, interpreter}
       :MINUS -> report_runtime_error(interpreter, expr.operator, "Operand must be a number.")
-      _ -> nil
+      _ -> {nil, interpreter}
     end
   end
 
@@ -99,6 +103,19 @@ defmodule Loex.Interpreter do
       {:ok, value} -> {value, interpreter}
       {:error, message} -> report_runtime_error(interpreter, expr.name, message)
     end
+  end
+
+  defp execute_block(%__MODULE__{} = interpreter, statements, environment) do
+    previous_env = interpreter.environment
+    interpreter = %{interpreter | environment: environment}
+
+    interpreter =
+      Enum.reduce(statements, interpreter, fn stmt, interpreter ->
+        {_, interpreter} = execute(interpreter, stmt)
+        interpreter
+      end)
+
+    {nil, %{interpreter | environment: previous_env}}
   end
 
   def report_runtime_error(%__MODULE__{runtime: runtime} = interpreter, token, message) do

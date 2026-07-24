@@ -2,6 +2,7 @@ defmodule Loex.Stmt do
   @moduledoc false
 
   @stmts [
+    Block: [:statements],
     Expression: [:expression],
     Print: [:expression],
     Var: [:name, :initializer]
